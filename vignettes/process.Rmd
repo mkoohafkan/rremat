@@ -1,0 +1,28 @@
+# Processing Largier Lab Russian River Estuary Data
+
+```{r include = FALSE}
+require(reval)
+require(rremat)
+```
+
+## Processing CTD transect data
+
+This code reproduces `ctd.df` from the Matlab files in `extdata`.
+
+```{r process-ctd}
+ctdpath = system.file("extdata/ctd", package = "rremat")
+ctd = evalmany(function(fpath) read_rrectd(fpath, quiet = TRUE)[[1]], 
+  fpath = paste0(ctdpath, "/", dir(ctdpath)), collate = FALSE)
+ctd.df = depth_from_elev(merge_rrectd(ctd))
+```
+
+## Processing water level pressure gauge data
+
+This code reproduces `wll.df` from the Matlab files in `extdata`.
+
+```{r process-wll}
+wllpath = system.file("extdata/wll", package = "rremat")
+wll = evalmany(function(fpath) read_rrewll(fpath, quiet = TRUE)[[1]], 
+  fpath = paste0(wllpath, "/", dir(wllpath)), collate = FALSE) 
+wll.df = merge_rrewll(wll)
+```

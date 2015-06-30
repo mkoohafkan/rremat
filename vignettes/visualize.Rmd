@@ -1,0 +1,55 @@
+# Visualizing Russian River Estuary Data
+
+```{r include = FALSE}
+require(rremat)
+require(ggplot2)
+require(knitr)
+opts_chunk$set(fig.width = 12, fig.height = 8)
+```
+
+## CTD data
+
+```{r plot-ctd, echo = FALSE}
+data(ctd.df)
+
+baseplot = function(p) 
+  ggplot(p, aes(y = depth)) + scale_x_continuous(breaks = pretty_breaks()) +
+  scale_y_reverse() + facet_wrap(~ dist, nrow = 1)
+
+lyrs = list(
+  ta = geom_path(aes(x = ta)),
+  sa = geom_path(aes(x = sa)),
+  fl = geom_path(aes(x = fl)),
+  oa = geom_path(aes(x = oa))  
+)
+
+dates = unique(ctd.df$date)
+names(dates) = paste(dates)
+
+ctd.plots = vector("list", length = length(lyrs))
+names(ctd.plots) = names(lyrs)
+for(n in names(ctd.plots)){
+  ctd.plots[[n]] = vector("list", length = length(dates))
+  names(ctd.plots[[n]]) = paste(dates)
+  for(d in names(dates))
+    ctd.plots[[n]][[d]] = baseplot(subset(ctd.df, date == dates[[d]])) + 
+      lyrs[[n]] + ggtitle(d)
+}
+```
+
+### Temperature
+
+```{r plot-ctd-temp, echo = FALSE}
+for(p in ctd.plots$ta)
+  print(p)
+```
+
+### Salinity
+
+```{r plot-ctd-sal, echo = FALSE}
+for(p in ctd.plots$sa)
+  print(p)
+```
+
+## WLL Data
+
