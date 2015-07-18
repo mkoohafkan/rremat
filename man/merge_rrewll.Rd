@@ -4,7 +4,8 @@
 \alias{merge_rrewll}
 \title{Combine Water Level Records}
 \usage{
-merge_rrewll(wll, timecol = "mtime", depthcol = "depth", sitecol = "site")
+merge_rrewll(wll, timecol = "mtime", depthcol = "depth", elevcol = "elev",
+  tempcol = "temp", sitecol = "site")
 }
 \arguments{
 \item{wll}{A list of dataframes of water level data}
@@ -13,6 +14,10 @@ merge_rrewll(wll, timecol = "mtime", depthcol = "depth", sitecol = "site")
 times are assumed to be in "UTC" timezone.}
 
 \item{depthcol}{The column name containing depths.}
+
+\item{elevcol}{The column name containing elevations.}
+
+\item{tempcol}{The column name containing temperatures.}
 
 \item{sitecol}{The column name to contain site data.}
 }
