@@ -12,3 +12,6 @@ Imports: R.matlab (>= 3.2)
 Suggests: reval, knitr, ggplot2, dplyr
 License: MIT + file LICENSE
 LazyData: true
+VignetteBuilder: knitr
+URL: https://github.com/mkoohafkan/rremat
+BugReports: https://github.com/mkoohafkan/rremat/issues 

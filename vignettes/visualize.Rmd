@@ -3,27 +3,31 @@
 ```{r include = FALSE}
 require(rremat)
 require(ggplot2)
+require(scales)
 require(knitr)
-opts_chunk$set(fig.width = 12, fig.height = 8)
+opts_chunk$set(fig.width = 12, fig.height = 8, echo = FALSE)
 ```
 
 ## CTD data
 
-```{r plot-ctd, echo = FALSE}
-data(ctd.df)
+```{r plot-ctd}
+data(ctd)
 
 baseplot = function(p) 
-  ggplot(p, aes(y = depth)) + scale_x_continuous(breaks = pretty_breaks()) +
+  ggplot(p, aes(y = depth, color = id)) + scale_x_continuous(breaks = pretty_breaks()) +
   scale_y_reverse() + facet_wrap(~ dist, nrow = 1)
 
 lyrs = list(
   ta = geom_path(aes(x = ta)),
   sa = geom_path(aes(x = sa)),
   fl = geom_path(aes(x = fl)),
-  oa = geom_path(aes(x = oa))  
+  oa = geom_path(aes(x = oa)),
+  sat = geom_path(aes(x = sat)),
+  da = geom_path(aes(x = fl)),
+  bt = geom_path(aes(x = bt))
 )
 
-dates = unique(ctd.df$date)
+dates = unique(ctd$date)
 names(dates) = paste(dates)
 
 ctd.plots = vector("list", length = length(lyrs))
@@ -32,24 +36,124 @@ for(n in names(ctd.plots)){
   ctd.plots[[n]] = vector("list", length = length(dates))
   names(ctd.plots[[n]]) = paste(dates)
   for(d in names(dates))
-    ctd.plots[[n]][[d]] = baseplot(subset(ctd.df, date == dates[[d]])) + 
+    ctd.plots[[n]][[d]] = baseplot(subset(ctd, date == dates[[d]])) + 
       lyrs[[n]] + ggtitle(d)
 }
 ```
 
 ### Temperature
 
-```{r plot-ctd-temp, echo = FALSE}
+```{r plot-ctd-temp}
 for(p in ctd.plots$ta)
   print(p)
 ```
 
 ### Salinity
 
-```{r plot-ctd-sal, echo = FALSE}
-for(p in ctd.plots$sa)
+```{r plot-ctd-sal}
+for(p in ctd.plots$sa){
+  print(p)
+}
+```
+
+### Dissolved Oxygen
+
+```{r plot-ctd-do}
+for(p in ctd.plots$oa)
   print(p)
 ```
 
+### Dissolved Oxygen Percent Saturation
+
+```{r plot-ctd-sat}
+for(p in ctd.plots$sat)
+  print(p)
+```
+
+### Florescence
+
+```{r plot-ctd-fl}
+for(p in ctd.plots$fl)
+  print(p)
+```
+
+
+## Interpolated CTD grids
+
+```{r plot-grids}
+data(grids)
+
+baseplot = function(p) 
+  ggplot(p, aes(x = dist, y = elev)) + xlim(min(grids$dist), max(grids$dist)) +
+    ylim(min(grids$elev), max(grids$elev)) + facet_wrap(~ id)
+lyrs = list(
+  ta = geom_raster(aes(fill = ta)),
+  sa = geom_raster(aes(fill = sa)),
+  fl = geom_raster(aes(fill = fl)),
+  oa = geom_raster(aes(fill = oa)),
+  sat = geom_raster(aes(fill = sat)),
+  da = geom_raster(aes(fill = fl)),
+  bt = geom_raster(aes(fill = bt))
+)
+
+dates = unique(grids$date)
+names(dates) = paste(dates)
+
+grids.plots = vector("list", length = length(lyrs))
+names(grids.plots) = names(lyrs)
+for(n in names(grids.plots)){
+  grids.plots[[n]] = vector("list", length = length(dates))
+  names(grids.plots[[n]]) = paste(dates)
+  for(d in names(dates))
+    grids.plots[[n]][[d]] = baseplot(na.omit(subset(grids, 
+    date== dates[[d]]))) + lyrs[[n]] + ggtitle(d)
+}
+```
+
+### Temperature
+
+```{r plot-grids-temp}
+for(p in grids.plots$ta)
+  print(p + scale_fill_gradientn(colours = rev(c("#A50026", "#D73027", 
+    "#F46D43", "#FDAE61", "#FEE090", "#E0F3F8", "#ABD9E9", "#74ADD1", 
+    "#4575B4", "#313695"))))
+```
+
+### Salinity
+
+```{r plot-grids-sal}
+for(p in grids.plots$sa)
+  print(p  + scale_fill_gradientn(colours = rev(c("#A50026", "#D73027", 
+    "#F46D43", "#FDAE61", "#FEE090", "#E0F3F8", "#ABD9E9", "#74ADD1", 
+    "#4575B4", "#313695"))) )
+```
+
+### Dissolved Oxygen
+
+```{r plot-grids-do}
+for(p in grids.plots$oa)
+  print(p + scale_fill_gradientn(colours = c("#A50026", "#D73027", "#F46D43", 
+    "#FDAE61", "#FEE090", "#E0F3F8", "#ABD9E9", "#74ADD1", "#4575B4", 
+    "#313695")) )
+```
+
 ## WLL Data
+
+```{r plot-wll}
+data(wll)
+```
+
+### Water Depth
+
+```{r plot-wll-depth}
+ggplot(wll, aes(x = mtime, y = depth)) + geom_line() + 
+  facet_wrap(~ site, ncol = 1)
+```
+
+### Water Temperature
+
+```{r plot-wll-temp}
+ggplot(wll, aes(x = mtime, y = temp)) + geom_line() + 
+  facet_wrap(~ site, ncol = 1)
+```
 

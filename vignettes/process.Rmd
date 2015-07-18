@@ -5,24 +5,102 @@ require(reval)
 require(rremat)
 ```
 
-## Processing CTD transect data
-
-This code reproduces `ctd.df` from the Matlab files in `extdata`.
-
-```{r process-ctd}
-ctdpath = system.file("extdata/ctd", package = "rremat")
-ctd = evalmany(function(fpath) read_rrectd(fpath, quiet = TRUE)[[1]], 
-  fpath = paste0(ctdpath, "/", dir(ctdpath)), collate = FALSE)
-ctd.df = depth_from_elev(merge_rrectd(ctd))
-```
-
 ## Processing water level pressure gauge data
 
-This code reproduces `wll.df` from the Matlab files in `extdata`.
+This code reproduces the dataframe `wll` from the Matlab files in 
+`extdata/wll`.
 
 ```{r process-wll}
 wllpath = system.file("extdata/wll", package = "rremat")
-wll = evalmany(function(fpath) read_rrewll(fpath, quiet = TRUE)[[1]], 
+wll.list = evalmany(function(fpath) read_rrewll(fpath, quiet = TRUE)[[1]], 
   fpath = paste0(wllpath, "/", dir(wllpath)), collate = FALSE) 
-wll.df = merge_rrewll(wll)
+wll = merge_rrewll(wll.list)
+```
+
+## Processing CTD transect meta data
+
+This code reproduces the dataframe `ctdmeta` from 
+`extdata/ctd/transectdatetimes.csv`, which provides meta data for the transect 
+data described in the following sections.
+
+```{r process-ctdmeta}
+ctdmpath = system.file("extdata/ctd_meta", package = "rremat")
+ctdm = read.csv(paste0(ctdmpath, "/transectdatetime.csv"), 
+  stringsAsFactors = FALSE)
+ctdmeta = data.frame(id = factor(ctdm$id), 
+  start = as.POSIXct(paste(ctdm$date, ctdm$start), tz = "US/Pacific"), 
+  end = as.POSIXct(paste(ctdm$date, ctdm$end), tz = "US/Pacific"), 
+  note = ctdm$state)
+```
+
+## Processing CTD transect data
+
+This code reproduces the dataframe `ctd` from the Matlab files in 
+`extdata/ctd`.
+
+```{r process-ctd}
+ctdpath = system.file("extdata/ctd", package = "rremat")
+ctd.list = evalmany(function(fpath) read_rrectd(fpath, quiet = TRUE)[[1]], 
+  fpath = paste0(ctdpath, "/", dir(ctdpath)), collate = FALSE)
+ctd = correct_dist(depth_from_elev(merge_rrectd(ctd.list)))
+```
+
+## Processing interpolated CTD data
+
+This code reproduces the dataframe `grids` from the matlab files
+in `extdata/ctd_interp`. Note that the `dist` values have already been 
+corrected as per the function `correct_dist` (see `matlab-src/interpctd.m`).
+
+```{r process-grids}
+gridpath = system.file("extdata/ctd_interp", package = "rremat")
+grid.list = evalmany(function(fpath) read_rrectdgrid(fpath, quiet = TRUE)[[1]],
+  fpath = paste0(gridpath, "/", dir(gridpath)), collate = FALSE)
+grids = merge_rrectd(grid.list)
+```
+
+## Processing the volume lookup table
+
+This code reproduces the dataframe `volumes` from the text files in
+extdata/bathymetry.
+
+```{r process-lookup}
+volpath = system.file("extdata/bathymetry", package = "rremat")
+volumes = read.csv(paste0(volpath, "/volumelookup.csv"))
+```
+
+## Supplemental Data
+
+The following data sets are not produced in cooperation with the Largier Lab, 
+but provide critical supplemental data.
+
+### Tide data
+
+This code reproduces the dataframe `ptreyes` generated from files in 
+`extdata/tides`. The files contain data for the 
+[NOAA Point Reyes Station](http://tidesandcurrents.noaa.gov/stationhome.html?id=9415020) 
+downloaded from the NOAA web API. Those files were created using the function 
+`download_tides`.
+
+```{r process-tides}
+tidespath = system.file("extdata/tides", package = "rremat")
+tides.list = evalmany(read.csv, file = paste0(tidespath, "/", dir(tidespath)),
+  default.args = list(stringsAsFactors = FALSE), collate = FALSE)
+tides = merge_tides(tides.list)
+```
+
+### Streamflow data
+
+This code reproduces the dataframe `inflows` from the files in 
+`extdata/streamflow`. The files contain streamflow data for from USGS gauges near 
+[Guerneville, CA](http://waterdata.usgs.gov/nwis/inventory/?site_no=11467000&agency_cd=USGS)
+(Russian River) and near 
+[Cazadero, CA](http://waterdata.usgs.gov/nwis/inventory/?site_no=11467200&agency_cd=USGS) 
+(Austin Creek). Those files were downloaded from the USGS 
+[National Water Information System]([http://waterdata.usgs.gov/nwis/](http://waterdata.usgs.gov/nwis/)).
+
+```{r process-streamflow}
+sfpath = system.file("extdata/streamflow", package = "rremat")
+sf.list = evalmany(read.csv, file = paste0(sfpath, "/", dir(sfpath)), 
+  default.args = list(stringsAsFactors = FALSE), collate = FALSE)
+inflows = merge_streamflow(sf.list)
 ```
