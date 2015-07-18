@@ -10,7 +10,7 @@ data(closures)
 }
 \description{
 Estuary closures identified from water level and photographic data.
-  Structured as:
+Structured as:
 \enumerate{
   \item \code{id} (arbitary) closure id
   \item \code{initiation} date of closure initiation

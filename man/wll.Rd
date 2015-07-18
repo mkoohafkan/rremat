@@ -10,7 +10,7 @@ data(wll)
 }
 \description{
 Pressure gauge water Level data collected by the Largier Lab and processed
-  using \code{rremat}. Structured as:
+using \code{rremat}. Structured as:
 \itemize{
   \item \code{site} gauge location
   \item \code{mtime} timestamp (UTC)

@@ -10,7 +10,7 @@ data(ctd)
 }
 \description{
 CTD cast data collected by the Largier Lab and processed using
-  \code{rremat}. Structured as:
+\code{rremat}. Structured as:
 \enumerate{
   \item \code{date} cast date
   \item \code{dist} longitudinal distance from mouth (km)
