@@ -190,28 +190,31 @@ depth_from_elev = function(d, depthcol = "depth", elevcol = "elev",
 #'   corrections are shown below:
 #'   \itemize{
 #'     \item 0.3 => 400
-#'     \item 1.2 => 1100
-#'     \item 2.5 => 2600
-#'     \item 3.5 => 3800
+#'     \item (1.1, 1.2) => 1100
+#'     \item 1.5 => 4800 (typo)
+#'     \item (2.4, 2.5) => 2600
+#'     \item (3.1, 3.2, 3.5) => 3800
 #'     \item 4.0 => 4300
 #'     \item 4.6 => 4800
 #'     \item 5.3 => 5700
 #'     \item 6.4 => 6900
-#'     \item 7.3 => 7900
+#'     \item (7.3, 7.4) => 7900
 #'     \item 8.7 => 9300
 #'     \item 9.5 => 10100
-#'     \item 10.0 => 10800
+#'     \item (10.0, 10.1) => 10800
 #'   }
 #'
 #' @seealso read_rrectd read_rrectdgrid merge_rrectd
 #'
 #' @export
 correct_dist = function(d, distcol = "dist"){  
-  riverdist = data.frame(dist =  c(0.3, 1.2, 2.5, 3.5, 4.0, 4.6, 5.3, 6.4, 7.3, 
-    8.7, 9.5, 10.0), distcor = c(400, 1100, 2600, 3800, 4300, 4800, 5700, 6900, 
-    7900, 9300, 10100, 10800))
-  for(i in seq(nrow(riverdist)))
-    d[d[[distcol]] == riverdist$dist[i], distcol] = riverdist$distcor[i]
+  riverdist = data.frame(dist =  c(0.3, 1.1, 1.2, 1.5, 2.4, 2.5, 3.1, 3.2, 3.5, 
+    4.0, 4.6, 5.3, 6.4, 7.3, 7.4, 8.7, 9.5, 10.0), distcor = c(400, 1100, 1100,
+    4800, 2600, 2600, 3800, 3800, 3800, 4300, 4800, 5700, 6900, 7900, 9300, 
+    10100, 10800, 10800))
+    
+  d[distcol] = sapply(d[[distcol]], function(x) 
+    riverdist$distcor[which.min(abs(x - riverdist$dist))])    
   d
 }
 

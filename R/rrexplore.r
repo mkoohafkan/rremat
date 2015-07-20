@@ -9,6 +9,8 @@
 #' @param x Vector containing variable of interest (e.g. temperature, salinity)
 #'   of same length as \code{z}.
 #' @param np Number of points to use in linear regressions (see 'details'). 
+#' @param min.range The minimum range in the value of \code{x} in order
+#'   for a mixing layer to be detectable.
 #' @param return.index If TRUE, return the index of \code{z} corresponding to
 #'   the mixing layer depth. Otherwise, return the depth.
 #' @return either the mixing layer depth or the element index of z associated 
@@ -33,7 +35,7 @@
 #' 
 #' #' @seealso \code{\link{blt}}
 #' @export
-mld = function(z, x = NULL, np = 2, return.index = FALSE){
+mld = function(z, x = NULL, np = 2, min.range = 0, return.index = FALSE){
   if(is.null(x)){
     x = z[, 2]
     z = z[, 1]
@@ -43,6 +45,9 @@ mld = function(z, x = NULL, np = 2, return.index = FALSE){
   minx = min(x)
   maxx = max(x)
   rangex = maxx - minx
+  # return NA if range of variable is too small
+  if(rangex < min.range)
+    return(NA)
   minz = z[min(which(x == min(x)))]
   maxz = z[max(which(x == max(x)))]
   rangez = maxz - minz
@@ -57,14 +62,14 @@ mld = function(z, x = NULL, np = 2, return.index = FALSE){
   j = np - 1
   K = length(z)
   tantheta = 0
-  clinek = 0
+  clinek = 1
   for(k in seq(j + 1, K - m)){
     Gtop = lm(x ~ z, data.frame(z = z[seq(k - j, k)], 
       x = x[seq(k - j, k)]))$coefficients[[2]]
     Gbot = lm(x ~ z, data.frame(z = z[seq(k, k + m)], 
       x = x[seq(k, k + m)]))$coefficients[[2]]
     newtantheta = abs((Gbot - Gtop)/(1 + Gbot*Gtop))
-    if(newtantheta > tantheta){
+    if(!is.na(newtantheta) & newtantheta > tantheta){
       clinek = k
       tantheta = newtantheta
     }  
