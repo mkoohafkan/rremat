@@ -9,4 +9,3 @@ for i = 1:length(fname)
     0.1, 0.1, 'natural', 'none') ;
   save([fpath '_interp/' fname{i}(1:end-4) '_interp.mat'], 'ctd_interp') ;
 end
-

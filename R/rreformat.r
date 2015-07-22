@@ -209,9 +209,9 @@ depth_from_elev = function(d, depthcol = "depth", elevcol = "elev",
 #' @export
 correct_dist = function(d, distcol = "dist"){  
   riverdist = data.frame(dist =  c(0.3, 1.1, 1.2, 1.5, 2.4, 2.5, 3.1, 3.2, 3.5, 
-    4.0, 4.6, 5.3, 6.4, 7.3, 7.4, 8.7, 9.5, 10.0), distcor = c(400, 1100, 1100,
-    4800, 2600, 2600, 3800, 3800, 3800, 4300, 4800, 5700, 6900, 7900, 9300, 
-    10100, 10800, 10800))
+    4.0, 4.6, 5.3, 6.4, 7.3, 7.4, 8.7, 9.5, 10.0, 10.1), distcor = c(400, 1100,
+    1100, 4800, 2600, 2600, 3800, 3800, 3800, 4300, 4800, 5700, 6900, 7900, 
+    7900, 9300, 10100, 10800, 10800))
     
   d[distcol] = sapply(d[[distcol]], function(x) 
     riverdist$distcor[which.min(abs(x - riverdist$dist))])    

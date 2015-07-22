@@ -14,21 +14,32 @@ function Vs = interpctd(ctd, xn, zn, vns, xres, zres, interptype, extraptype)
 
   % correct ctd distances
   riverdist = [0.30 400
+               1.10 1100
                1.20 1100
+               1.50 4800
+               2.40 2600
                2.50 2600
+               3.10 3800
+               3.20 3800
                3.50 3800
                4.00 4300
                4.60 4800
                5.30 5700
                6.40 6900
                7.30 7900
+               7.40 7900
                8.70 9300
                9.50 10100
-               10.0 10800] ;
-  for i = 1:size(riverdist, 1)
-    ctd.(xn)(ctd.(xn) == riverdist(i, 1)) = riverdist(i, 2)/1000 ;
+               10.0 10800
+               10.1 10800] ;
+  udist = unique(ctd.(xn)) ;
+  for i = 1:size(udist, 1)
+    distmask = ctd.(xn) == udist(i) ;
+    diff = abs(udist(i) - riverdist(:, 1)) ;
+    whichmin = diff == min(diff) ;
+    ctd.(xn)(distmask) = riverdist(whichmin, 2) ;
   end
-
+  ctd.(xn) = ctd.(xn)/1000 ;
   % make the grid
   zgrid = zbound:zres:surfacebound ;
   xgrid = min(ctd.(xn)):xres:max(ctd.(xn)) ;
