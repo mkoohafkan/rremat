@@ -15,6 +15,7 @@ wllpath = system.file("extdata/wll", package = "rremat")
 wll.list = evalmany(function(fpath) read_rrewll(fpath, quiet = TRUE)[[1]], 
   fpath = paste0(wllpath, "/", dir(wllpath)), collate = FALSE) 
 wll = merge_rrewll(wll.list)
+wll = wll[!is.nan(wll$depth),]
 ```
 
 ## Processing CTD transect meta data
@@ -44,6 +45,7 @@ ctd.list = evalmany(function(fpath) read_rrectd(fpath, quiet = TRUE)[[1]],
   fpath = paste0(ctdpath, "/", dir(ctdpath)), collate = FALSE)
 ctd = correct_dist(depth_from_elev(merge_rrectd(ctd.list)))
 ```
+
 
 ## Processing interpolated CTD data
 
