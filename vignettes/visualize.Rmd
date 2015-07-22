@@ -14,17 +14,16 @@ opts_chunk$set(fig.width = 12, fig.height = 8, echo = FALSE)
 data(ctd)
 
 baseplot = function(p) 
-  ggplot(p, aes(y = depth, color = id)) + scale_x_continuous(breaks = pretty_breaks()) +
-  scale_y_reverse() + facet_wrap(~ dist, nrow = 1)
+  ggplot(p, aes(x = depth, color = id)) + scale_y_continuous(breaks = pretty_breaks()) + scale_x_reverse() + coord_flip() + facet_wrap(~ dist, nrow = 1)
 
 lyrs = list(
-  ta = geom_path(aes(x = ta)),
-  sa = geom_path(aes(x = sa)),
-  fl = geom_path(aes(x = fl)),
-  oa = geom_path(aes(x = oa)),
-  sat = geom_path(aes(x = sat)),
-  da = geom_path(aes(x = fl)),
-  bt = geom_path(aes(x = bt))
+  ta = geom_line(aes(y = ta)),
+  sa = geom_line(aes(y = sa)),
+  fl = geom_line(aes(y = fl)),
+  oa = geom_line(aes(y = oa)),
+  sat = geom_line(aes(y = sat)),
+  da = geom_line(aes(y = fl)),
+  bt = geom_line(aes(y = bt))
 )
 
 dates = unique(ctd$date)
