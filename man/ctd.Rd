@@ -22,11 +22,14 @@ CTD cast data collected by the Largier Lab and processed using
   \item \code{da}
   \item \code{oa} dissolved oxygen (mg/L)
   \item \code{sat} dissolved oxygen percent saturation (%)
-  \item \code{fl} fluorescence
-  \item \code{bt}
-  \item \code{par}
+  \item \code{fl} fluorescence (ug/L))
+  \item \code{bt} beam transmission (%)
+  \item \code{par} photosynthetically-active radiation (umol^-1 m^-2)
   \item \code{ph} pH
 }
+}
+\seealso{
+read_rrectd merge_rrectd depth_from_elev correct_dist
 }
 \keyword{datasets}
 

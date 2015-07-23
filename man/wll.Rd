@@ -17,5 +17,8 @@ using \code{rremat}. Structured as:
   \item \code{depth} water depth (m)
 }
 }
+\seealso{
+read_rrewll merge_rrewll
+}
 \keyword{datasets}
 

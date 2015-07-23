@@ -25,4 +25,7 @@ Add cast depths to CTD transect data.
 \details{
 Depth is calculated as \code{depthcol = surfelevcol - elevcol}.
 }
+\seealso{
+read_rrectd read_rrectdgrid merge_rrectd
+}
 

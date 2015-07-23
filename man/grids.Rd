@@ -20,5 +20,8 @@ Matlab. Structured as:
   \item \code{date} cast date
 }
 }
+\seealso{
+read_rrectdgrid merge_rrectd depth_from_elev
+}
 \keyword{datasets}
 

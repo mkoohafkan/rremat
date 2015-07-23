@@ -24,17 +24,21 @@ Distances are corrected and converted from km to m by comparing GPS
   corrections are shown below:
   \itemize{
     \item 0.3 => 400
-    \item 1.2 => 1100
-    \item 2.5 => 2600
-    \item 3.5 => 3800
+    \item (1.1, 1.2) => 1100
+    \item 1.5 => 4800 (typo)
+    \item (2.4, 2.5) => 2600
+    \item (3.1, 3.2, 3.5) => 3800
     \item 4.0 => 4300
     \item 4.6 => 4800
     \item 5.3 => 5700
     \item 6.4 => 6900
-    \item 7.3 => 7900
+    \item (7.3, 7.4) => 7900
     \item 8.7 => 9300
     \item 9.5 => 10100
-    \item 10.0 => 10800
+    \item (10.0, 10.1) => 10800
   }
+}
+\seealso{
+read_rrectd read_rrectdgrid merge_rrectd
 }
 

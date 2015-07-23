@@ -18,20 +18,21 @@ Volume lookup table constructed from RRE bathymetry. Structured as:
     i.e. \code{elev = 0.1} identifies the region spanning 0 and 0.1 meters
     elevation.
   \item \code{count} the total number of cells contained within each zone
-     and vertical increment.
+    and vertical increment.
 }
 }
 \details{
 The volume lookup table was generated from the RRE bathymetry DEM
-and zone delineations based on a manual trace of the river thaleweg. The
-volume cells are defined as having a length of 1 meter, width of 1 meter,
-and height of 0.1 meters (cell volume of 0.1 cubic meters). Zones are
-delineated in 100-meter increments along the thalweg, and each zone is
-divided in the vertical into 0.1-meter increments from a minimum elevation
-of -15.8 meters to a maximum elevation of 2.6 meters. The lookup table lists
-the count of volume elements in each vertical increment in each zone, i.e.
-each row lists the number of elements between river distances \code{d} and
-\code{d - 100} and between depths \code{z} and \code{z - 0.1}.
+  and zone delineations based on a manual trace of the river thaleweg. The
+  volume cells are defined as having a length of 1 meter, width of 1 meter,
+  and height of 0.1 meters (cell volume of 0.1 cubic meters). Zones are
+  delineated in 100-meter increments along the thalweg, and each zone is
+  divided in the vertical into 0.1-meter increments from a minimum elevation
+  of -15.8 meters to a maximum elevation of 2.6 meters. The lookup table
+  lists the count of volume elements in each vertical increment in each
+  zone, i.e. each row lists the number of elements between river distances
+  \code{d} and \code{d - 100} and between depths \code{z} and
+  \code{z - 0.1}.
 }
 \keyword{datasets}
 

@@ -5,10 +5,11 @@
 \title{Combine CTD Transects
 Combine CTD transect data files into a dataframe.}
 \usage{
-merge_rrectd(ctd, dates = NULL, timecol = "date")
+merge_rrectd(ctd, dates = NULL, ids = NULL, timecol = "date",
+  idcol = "id")
 }
 \arguments{
-\item{ctd}{A list of dataframes of CTD transect data}
+\item{ctd}{A list of dataframes of CTD transect data.}
 
 \item{dates}{Vector of dates of each transect listed in \code{ctd}. If
 \code{NULL}, will search for numeric YYYYMMDD in \code{names(ctd)}.}
@@ -18,5 +19,8 @@ merge_rrectd(ctd, dates = NULL, timecol = "date")
 \description{
 Combine CTD Transects
 Combine CTD transect data files into a dataframe.
+}
+\seealso{
+read_rrectd read_rrectdgrid
 }
 

@@ -4,16 +4,20 @@
 \alias{mld}
 \title{Mixing Layer Depth}
 \usage{
-mld(z, x = NULL, np = 2, return.index = FALSE)
+mld(z, x = NULL, np = 2, min.range = 0, return.index = FALSE)
 }
 \arguments{
 \item{z}{Vector of depths, or 2-column dataframe containing depths in first
 column and variable of interest (e.g. temperature, salinity) in second
 column.}
 
-\item{x}{Vector containing variable of interest (e.g. temperature, salinity).}
+\item{x}{Vector containing variable of interest (e.g. temperature, salinity)
+of same length as \code{z}.}
 
 \item{np}{Number of points to use in linear regressions (see 'details').}
+
+\item{min.range}{The minimum range in the value of \code{x} in order
+for a mixing layer to be detectable.}
 
 \item{return.index}{If TRUE, return the index of \code{z} corresponding to
 the mixing layer depth. Otherwise, return the depth.}
@@ -39,10 +43,15 @@ data(ctd)
 zt = subset(ctd, date == date[1] & dist == dist[1])[c("depth", "ta")]
 mld(zt)
 mld(zt, return.index = TRUE)
+
+#'
 }
 \references{
 Chu, Peter C., and Chenwu Fan. "Maximum angle method for
   determining mixed layer depth from seaglider data." Journal of
   oceanography 67.2 (2011): 219-230.
+}
+\seealso{
+\code{\link{blt}}
 }
 

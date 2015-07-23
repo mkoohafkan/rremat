@@ -24,4 +24,7 @@ times are assumed to be in "UTC" timezone.}
 \description{
 Combine water level data files into a dataframe.
 }
+\seealso{
+read_rrewll
+}
 
