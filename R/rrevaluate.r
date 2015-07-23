@@ -15,7 +15,9 @@
 #'   expanding the resolution of \code{(value, score)} and fitting a spline 
 #'   using \code{spline()}. If \code{spline.expand = 1}, the habitat 
 #'   suitability curve is generated as a linear interpolation between 
-#'   \code{(value, score)} pairs.
+#'   \code{(value, score)} pairs. For integer values of 
+#'   \code{spline.expand > 1}, the lengths of \code{value} and \code{score} are
+#'   increased to \code{spline.expand*length(value)}.
 #' @param ... Additional arguments passed to \code{spline()}.
 #' @return A function representing the habitat suitability curve
 #'
@@ -35,7 +37,7 @@
 #'
 #' @export
 make_hsc = function(value, score, scoreleft = 0, scoreright = 0, 
-  spline.expand = 1, ...){
+  spline.expand = 1L, ...){
   if(missing(score)){
     score = value[,2]
     value = value[,1]
@@ -58,17 +60,17 @@ make_hsc = function(value, score, scoreleft = 0, scoreright = 0,
     yright = scoreright)
 }
 
-#' Generate Habitat Suitability Indices
+#' Habitat Suitability Index Generator
 #'
-#' Generate a habitat suitability index based on a set of habitat suitability 
-#' curves and an aggregation rule.
+#' Generate a habitat suitability index function based on a set of habitat 
+#' suitability curves and an aggregation rule.
 #'
 #' @param hsc A list of habitat suitability curve functions.
-#' @param ag.fun A function used for aggegating the outputs of the habitat 
+#' @param ag.fun A function used for aggregating the outputs of the habitat 
 #'   suitability curves.
 #' @return A function that calculates the Habitat Suitability Index given a 
-#'   vector of habitat suitability parameters corresponding (in order) to the 
-#'   habitat suitability curves contained in \code{hsc}.
+#'   vector or dataframe of habitat suitability parameters corresponding (in 
+#'   order) to the habitat suitability curves contained in \code{hsc}.
 #'
 #' @examples
 #' f1 = make_hsc(c(5, 10, 15, 20, 25), c(0, 0.7, 1, 0.75, 0))
@@ -95,7 +97,7 @@ make_hsi = function(hsc = list(), ag.fun = mean){
 #'
 #' @importFrom dplyr inner_join
 #' @export
-calc_volume = function(d, v, r, zcol = "elev", xcol = "dist"){
+add_volume = function(d, v, r, zcol = "elev", xcol = "dist"){
   retnames = names(d)
   cellvol = r$xres*r$yres*r$zres
   f = inner_join(d, v, by = c(xcol, zcol))
