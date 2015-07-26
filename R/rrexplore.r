@@ -11,6 +11,8 @@
 #' @param np Number of points to use in linear regressions (see 'details'). 
 #' @param min.range The minimum range in the value of \code{x} in order
 #'   for a mixing layer to be detectable.
+#' @param max.z Maximum value of \code{z} to use when searching for mixing 
+#'   layer depth.
 #' @param return.index If TRUE, return the index of \code{z} corresponding to
 #'   the mixing layer depth. Otherwise, return the depth.
 #' @return either the mixing layer depth or the element index of z associated 
@@ -35,10 +37,15 @@
 #' 
 #' #' @seealso \code{\link{blt}}
 #' @export
-mld = function(z, x = NULL, np = 2, min.range = 0, return.index = FALSE){
+mld = function(z, x = NULL, np = 2, min.range = 0, max.z = NULL, 
+  return.index = FALSE){
   if(is.null(x)){
     x = z[, 2]
     z = z[, 1]
+  }
+  if(!is.null(max.z)){
+    x = x[z <= max.z]
+    z = z[z <= max.z]
   }
   if(np > floor(0.5*length(z)))
     stop("Argument 'np' is too large.")
@@ -53,21 +60,21 @@ mld = function(z, x = NULL, np = 2, min.range = 0, return.index = FALSE){
   rangez = maxz - minz
   if(minz != min(z) | maxz != max(z))
     warning("Data is noisy")
-  x10 = minx + 0.1*rangex
-  x70 = minx + 0.7*rangex
-  z10 = z[min(which(x >= x10))]
-  z70 = z[max(which(x <= x70))]
-  n = max(which(x <= x70)) - min(which(x >= x10))
   m = np - 1
   j = np - 1
   K = length(z)
   tantheta = 0
   clinek = 1
   for(k in seq(j + 1, K - m)){
-    Gtop = lm(x ~ z, data.frame(z = z[seq(k - j, k)], 
-      x = x[seq(k - j, k)]))$coefficients[[2]]
-    Gbot = lm(x ~ z, data.frame(z = z[seq(k, k + m)], 
-      x = x[seq(k, k + m)]))$coefficients[[2]]
+#   Gtop = lm(x ~ z, data.frame(z = z[seq(k - j, k)], 
+#     x = x[seq(k - j, k)]))$coefficients[[2]]
+#   Gbot = lm(x ~ z, data.frame(z = z[seq(k, k + m)], 
+#     x = x[seq(k, k + m)]))$coefficients[[2]]
+    # slope of line z ~ x is defined as cor(x, z)*sd(x)/sd(z)
+    topmask = seq(k - j, k)
+    botmask = seq(k, k + m)
+    Gtop = cor(z[topmask], x[topmask])*sd(x[topmask])/sd(z[topmask])
+    Gbot = cor(z[botmask], x[botmask])*sd(x[botmask])/sd(z[botmask])
     newtantheta = abs((Gbot - Gtop)/(1 + Gbot*Gtop))
     if(!is.na(newtantheta) & newtantheta > tantheta){
       clinek = k
