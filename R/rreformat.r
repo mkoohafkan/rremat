@@ -218,3 +218,25 @@ correct_dist = function(d, distcol = "dist"){
   d
 }
 
+#' Add Volume
+#'
+#' Add water volume contained in depth and distance zones.
+#'
+#' @param d Dataframe containing physical data, e.g. \code{data(grids)}.
+#' @param v Dataframe containing volume lookup information, e.g. 
+#'   \code{data(volumes)}. Assumes first 3 columns are x, y, and z resolution 
+#'   respectively.
+#' @param zcol Column name containing vertical markers, e.g. \code{elev}.
+#' @param xcol Column name containing longitudinal markers, e.g. \code{dist}.
+#' @return The dataframe \code{d} with the additional column \code{volume}.
+#'
+#' @importFrom dplyr inner_join
+#' @export
+add_volume = function(d, v, r, zcol = "elev", xcol = "dist"){
+  retnames = names(d)
+  cellvol = prod(r[1:3])
+  f = inner_join(d, v, by = c(xcol, zcol))
+  f['count'] = as.integer(f$count)
+  f['volume'] = f$count*cellvol
+  f[c(retnames, 'volume')]
+}
