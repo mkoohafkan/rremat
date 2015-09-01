@@ -1,6 +1,7 @@
-#' Habitat Suitability Curve Generator
+#' Continuous Habitat Suitability Function Generator
 #'
-#' Generate a habitat suitability curve given parameter values and scores.
+#' Generate a continuous habitat suitability function given parameter values 
+#' and scores.
 #'
 #' @param value Vector of parameter values, or a dataframe containing 
 #'   parameters values in the first column and scores in the second column. 
@@ -60,6 +61,35 @@ make_hsc = function(value, score, scoreleft = 0, scoreright = 0,
     yright = scoreright)
 }
 
+#' Discrete Habitat Suitability Function Generator
+#'
+#' Generate a discrete habitat suitability function given parameter windows and 
+#' scores.
+#'
+#' @param expr List of expressions evaluating the value of a parameter \code{x}. 
+#'   All expressions should be mutually exclusive. See examples for how to 
+#'   construct the expressions.
+#' @param score Vector of scores assigned when a given expression evaluates as
+#'   \code{TRUE}.
+#' @return A function representing the habitat suitability index.
+#'
+#' @examples
+#' windows = list(
+#'   optimal = expression(x >= 14 & x <= 18),
+#'   suitable = expression(x < 14 | (x >= 18 & x < 21)),
+#'   stressful = expression(x >= 21 & x <= 25),
+#'   unsuitable = expression(x > 25)
+#' )
+#' scores = c(3, 2, 1, 0)
+#'
+#' make_hsd(windows, scores)
+#' make_hsd(windows, names(windows))
+#'
+#' @export
+make_hsd = function(expr, score){
+  function(x) score[unlist(lapply(expr, eval, envir = environment()))]  
+}  
+
 #' Habitat Suitability Index Generator
 #'
 #' Generate a habitat suitability index function based on a set of habitat 
@@ -84,3 +114,52 @@ make_hsi = function(hsc = list(), ag.fun = mean){
     ag.fun(mapply(do.call, hsc, lapply(x, list)))
 }
 
+#' Join volume information
+#' 
+#' @param d Dataframe containing data to have volume information attached to.
+#' @param volumes Dataframe containing cell counts. If \code{cellvol} is 
+#'   missing, must also containing the attribute "resolution" which is a 
+#'   dataframe or list with elements \code{xres}, \code{yres}, and \code{zres}.
+#' @param cellvol Numeric volume of cells desribed by \code{volumes}.
+#' @param joincols Columns to use when joining \code{volumes} to \code{d}.
+#' @countcol Column name containing cell count data in \code{volumes}.
+#' @param volcol The name of the column containing volume data to be added to
+#'   \code{d}.
+#' @return The dataframe \code{d} with the additional column \code{volcol}.
+#'
+#' @importFrom dplyr inner_join
+#' @export
+join_volume = function(d, volumes, cellvol, joincols = c("elev", "dist"), 
+  countcol = "count", volcol = "volume"){
+  if(missing(volumes))
+    data(volumes, envir = environment())
+  if(missing(cellvol))
+    cellvol = prod(attr(volumes, "resolution")[c("xres", "yres", "zres")])    
+  ind = d
+  d[, joincols] = as.character(unlist(d[, joincols]))
+  volumes[, joincols] = as.character(unlist(volumes[, joincols]))
+  f = inner_join(d, volumes, by = c("elev", "dist"))
+  f[, joincols] = as.numeric(unlist(f[, joincols]))
+  ind[volcol] = f[[countcol]]*cellvol
+  ind
+}
+
+#' Summarize by Strata
+#'
+#' Group and summarize a dataframe by specific "strata" or groupings.
+#'
+#' @param d Th dataframe to be summarized.
+#' @param stratcols Vector or list of column names to group by.
+#' @param summexpr Named vector or list of expressions to summarize the data.
+#' @return A dataframe containing grouped and summarized data.
+#'
+#' @details This function is basically a wrapper for the \code{summarize} and
+#'   \code{group_by} functions provided by \code{dplyr}.
+#'
+#' @importFrom dplyr summarize_
+#' @importFrom dplyr group_by_
+#' @export
+summarize_by_strata = function(d, stratcols, summexpr){
+  as.data.frame(summarize_(group_by_(d, .dots = stratcols), 
+    .dots = summexpr))  
+}

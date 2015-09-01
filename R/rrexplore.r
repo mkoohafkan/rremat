@@ -122,24 +122,23 @@ blt = function(z, t, s, ...){
   abs(thermocline - pycnocline)
 }
 
-#' Stratify by Depth
+#' Stratify by a Variable
 #'
-#' Stratify depths into zones using specified midpoints.
+#' Stratify data into zones using specified midpoints.
 #'
-#' @param z Vector of depths
-#' @param midpoints Vector of midpoints or cut points to stratify \code{z} by.
-#'   \code{min(z)} and \code{max(z)} are automatically included.
+#' @param x Vector of values.
+#' @param midpoints Vector of midpoints or cut points to stratify \code{x} by.
+#'   \code{min(x)} and \code{max(x)} are automatically included.
 #' @param ... Other arguments to pass to \code{cut()}.
 #'
 #' @details This function is basically a wrapper for \code{cut()}, but requires
-#'   the cuts be directly specified and that \code{include.lowest = TRUE}. It
-#'   Every element of \code{z} is therefore guaranteed to be included in one
+#'   the cuts be directly specified and that \code{include.lowest = TRUE}.
+#'   Every element of \code{x} is therefore guaranteed to be included in one
 #'   interval.
-stratify_depth = function(z, midpoints, ...){
-  minz = min(z)
-  maxz = max(z)
-  if(any(midpoints >= maxz) | any(midpoints <= minz))
-    stop("Midpoints must be within range (min(z), max(z))")
-  cut(z, unique(c(minz, sort(midpoints), maxz)), include.lowest = TRUE, ...)  
+stratify = function(x, midpoints, ...){
+  minx = min(x)
+  maxx = max(x)
+  if(any(midpoints >= maxx) | any(midpoints <= minx))
+    stop("Midpoints must be within range (min(x), max(x))")
+  cut(x, unique(c(minx, sort(midpoints), maxx)), include.lowest = TRUE, ...)  
 }
-
