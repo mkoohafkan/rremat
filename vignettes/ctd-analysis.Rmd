@@ -1,0 +1,157 @@
+# Analysis of CTD cast data
+
+```{r include = FALSE}
+#require(rremat)
+require(ggplot2)
+require(dplyr)
+require(reshape2)
+require(tidyr)
+require(cluster)
+require(fpc)
+require(abind)
+require(kml3d)
+require(knitr)
+opts_chunk$set(fig.width = 12, fig.height = 8, echo = FALSE, warning = FALSE)
+```
+
+The following analyses focus on comparisons and correlations between CTD cast 
+locations.
+
+## Surface-layer data
+
+```{r get-surface}
+data(ctd)
+surfdepth = 0.75
+surface = summarize(group_by(ctd, date, id, dist), 
+  mindepth = min(depth),
+  ta = spline(depth, ta, xout = surfdepth)$y,
+  sa = spline(depth, sa, xout = surfdepth)$y,
+  oa = spline(depth, oa, xout = surfdepth)$y) 
+surface[surface$mindepth > surfdepth, c("ta", "sa", "oa")] = NA 
+
+surfacetemp = spread(surface[c("date", "id", "dist", "ta")], dist, ta)
+surfacesalinity = spread(surface[c("date", "id", "dist", "sa")], dist, sa)
+surfaceoxygen = spread(surface[c("date", "id", "dist", "oa")], dist, oa)
+surfacetemp.cor = cor(surfacetemp[-c(1, 2)], use = "pairwise.complete.obs", 
+  method = "kendall")
+surfacesalinity.cor = cor(surfacesalinity[-c(1, 2)], 
+  use = "pairwise.complete.obs", method = "kendall")
+surfaceoxygen.cor = cor(surfaceoxygen[-c(1, 2)], use = "pairwise.complete.obs", 
+  method = "kendall")
+
+surfacecor = melt(surfacetemp.cor)
+names(surfacecor) = c("dist1", "dist2", "ta")
+surfacecor["sa"] = melt(surfacesalinity.cor)[,3]
+surfacecor["oa"] = melt(surfaceoxygen.cor)[,3]
+surfacecor = na.omit(surfacecor[melt(lower.tri(surfacetemp.cor))[,3],])
+
+# plots
+surfacecor.plot = melt(surfacecor, id.var = c("dist1", "dist2"), 
+  value.name = "correlation")
+surfacecor.plot['dist.apart'] = abs(surfacecor.plot$dist1 - surfacecor.plot$dist2)
+
+ggplot(surfacecor.plot, aes(x = dist.apart, y = correlation)) + geom_point() + 
+  facet_wrap(~ variable) + ylim(c(-1, 1))
+
+ggplot(surfacecor.plot, aes(x = dist1, y = dist2, color = correlation)) + 
+  geom_abline(intercept = 0, slope = 1, alpha = 0.1) + 
+  geom_point() + coord_fixed() + facet_wrap(~ variable) +   
+  scale_colour_gradient2(low = "red", mid = "white", high = "blue")
+
+  
+# stupid clustering
+surfacecor["cluster"] = pamk(surfacecor, krange = 1:(nrow(surfacecor) - 1), 
+  scaling = FALSE)$pamobject$clustering
+ggplot(surfacecor, aes(x = dist1, y = dist2, color = factor(cluster))) + 
+  geom_abline(intercept = 0, slope = 1, alpha = 0.1) + 
+  geom_point() + coord_fixed() +   
+  scale_colour_distiller(n = length(unique(surfacecor$cluster)), palette = "Set1")  
+
+# longitudinal clustering
+surfacetemp.kml = clusterLongData(t(surfacetemp[-c(1:2)]), 
+  idAll = names(surfacetemp)[-c(1:2)])
+surfacesalinity.kml = clusterLongData(t(surfacesalinity[-c(1:2)]), 
+  idAll = names(surfacesalinity)[-c(1:2)])
+surfaceoxygen.kml = clusterLongData(t(surfaceoxygen[-c(1:2)]), 
+  idAll = names(surfaceoxygen)[-c(1:2)])
+
+#kml(surfacetemp.kml)
+
+#surface.kml3d
+
+```
+
+## Bottom-layer data
+  
+```{r get-bottom}
+bottomdepth = 5.0
+bottom = summarize(group_by(ctd, date, id, dist), 
+  maxdepth = max(depth),
+  ta = spline(depth, ta, xout = bottomdepth)$y,
+  sa = spline(depth, sa, xout = bottomdepth)$y,
+  oa = spline(depth, oa, xout = bottomdepth)$y)  
+bottom[bottom$maxdepth < bottomdepth, c("ta", "sa", "oa")] = NA
+
+bottomtemp = spread(bottom[c("date", "id", "dist", "ta")], dist, ta)
+bottomsalinity = spread(bottom[c("date", "id", "dist", "sa")], dist, sa)
+bottomoxygen = spread(bottom[c("date", "id", "dist", "oa")], dist, oa)
+bottomtemp.cor = cor(bottomoxygen[-c(1, 2)], use = "pairwise.complete.obs", 
+  method = "kendall")
+bottomsalinity.cor = cor(bottomtemp[-c(1, 2)], use = "pairwise.complete.obs", 
+  method = "kendall")
+bottomoxygen.cor = cor(bottomsalinity[-c(1, 2)], use = "pairwise.complete.obs", 
+  method = "kendall")
+
+bottomcor = melt(bottomtemp.cor)
+names(bottomcor) = c("dist1", "dist2", "ta")
+bottomcor["sa"] = melt(bottomsalinity.cor)[,3]
+bottomcor["oa"] = melt(bottomoxygen.cor)[,3]
+bottomcor = na.omit(bottomcor[melt(lower.tri(bottomtemp.cor))[,3],])
+
+bottomcor.plot = melt(bottomcor, id.var = c("dist1", "dist2"), 
+  value.name = "correlation")
+bottomcor.plot['dist.apart'] = abs(bottomcor.plot$dist1 - bottomcor.plot$dist2)
+
+ggplot(bottomcor.plot, aes(x = dist.apart, y = correlation)) + geom_point() + 
+  facet_wrap(~ variable) + ylim(c(-1, 1))
+
+ggplot(bottomcor.plot, aes(x = dist1, y = dist2, color = correlation)) + 
+  geom_abline(intercept = 0, slope = 1, alpha = 0.1) + 
+  geom_point() + coord_fixed() + facet_wrap(~ variable) + 
+  scale_colour_gradient2(low = "red", mid = "white", high = "blue") 
+
+# stupid clustering
+bottomcor["cluster"] = pamk(bottomcor, krange = 1:(nrow(bottomcor) - 1), 
+  scaling = FALSE)$pamobject$clustering
+  
+ggplot(bottomcor, aes(x = dist1, y = dist2, color = factor(cluster))) + 
+  geom_abline(intercept = 0, slope = 1, alpha = 0.1) + 
+  geom_point() + coord_fixed() +   
+  scale_colour_distiller(n = length(unique(bottomcor$cluster)), palette = "Set1")  
+
+# longitudinal clustering
+bottomtemp.kml = clusterLongData(t(bottomtemp[-c(1:2)]), 
+  idAll = names(bottomtemp)[-c(1:2)])
+bottomsalinity.kml = clusterLongData(t(bottomsalinity[-c(1:2)]), 
+  idAll = names(bottomsalinity)[-c(1:2)])
+bottomoxygen.kml = clusterLongData(t(bottomoxygen[-c(1:2)]), 
+  idAll = names(bottomoxygen)[-c(1:2)])
+
+#kml(surfacetemp.kml)
+
+#surface.kml3d
+
+```
+  
+## Mixing-layer data  
+
+```{r get-clines}
+cline = summarize(group_by(ctd, date, id, dist),
+  ta.cline = mld(depth, ta, min.range = 2, max.z = 4),  
+  sa.cline = mld(depth, sa, min.range = 5, max.z = 4),
+  oa.cline = mld(depth, oa, min.range = 1, max.z = 4),
+  blt = abs(ta.cline - sa.cline))
+    
+thermocline = spread(cline[c("date", "id", "dist", "ta.cline")], dist, ta.cline)
+pycnocline = spread(cline[c("date", "id", "dist", "sa.cline")], dist, sa.cline)
+```

@@ -1,0 +1,93 @@
+# Closure Analysis
+
+```{r include = FALSE}
+#require(rremat)
+require(ggplot2)
+require(dplyr)
+require(tidyr)
+require(knitr)
+require(reshape2)
+require(cluster)
+require(fpc)
+opts_chunk$set(fig.width = 12, fig.height = 8, echo = FALSE)
+```
+
+## Closure referencing
+
+The code below adds a reference to CTD transect dates indicating the closure ID
+associated with the transect and the number of days since closure began. In 
+this analysis, closures are identified based on the photographic record.
+
+```{r calc-days}
+data(closures)
+data(ctd)
+#closurecol = "closure.id"
+#durationcol = "days.since"
+#ctd[closurecol] = NA
+#ctd[durationcol] = NA
+#for(i in seq(nrow(closures))){
+#  idmask = ctd$date > closures$initiation[i] & ctd$date < closures$breach[i]
+#  ctd[idmask, closurecol] = closures$id[i]
+#  ctd[idmask, durationcol] = ctd[idmask, "date"] - closures$initiation[i]
+#}
+```
+
+## Constriction index
+
+The constriction index is intended to provide an indicator of the degree of 
+mouth constriction/closure. The Constriction index is the ratio of the daily 
+ocean water level range to the estuary water level range.
+
+We perform a cluster analysis to determine if the constriction index can be 
+used to classify mouth condition. We test clustering with 4 clusters 
+(closed, perched, constricted, open); 3 clusters (closed, partially-open, open);
+and 2 clusters (open, closed).
+
+```{r calc-ranges}
+data(tides)
+tiderange = summarize(group_by(tides, datetime = as.Date(datetime)), 
+  min = min(height), max = max(height), range = max - min)
+data(wll)
+rrerange = summarize(group_by(wll, site, 
+  mtime = as.Date(mtime)), min = min(depth), max = max(depth), 
+  range = max - min)
+# get water level from next nearest gauge if data at river mouth is missing
+range1 = spread(rrerange[c("site", "mtime", "range")], site, range)
+range1["source"] = "river mouth"
+range1["range"] = range1[["river mouth"]]
+range1[is.na(range1$range), "source"] = "jenner"
+range1[is.na(range1$range), "range"] = range1[is.na(range1$range), "jenner"]
+range1[is.na(range1$range), "source"] = "sheephouse creek"
+range1[is.na(range1$range), "range"] = range1[is.na(range1$range), "sheephouse creek"]
+range1[is.na(range1$range), "source"] = "heron rookery"
+range1[is.na(range1$range), "range"] = range1[is.na(range1$range), "heron rookery"]
+range1[is.na(range1$range), "source"] = "moscow bridge"
+range1[is.na(range1$range), "range"] = range1[is.na(range1$range), "moscow bridge"]
+
+rrerange = range1[c("mtime", "range", "source")]
+  
+data(ctdmeta)
+rreratio = data.frame(ctdmeta, date = as.Date(ctdmeta$start), rrerange = NA, 
+  tiderange = NA)
+for(i in seq(nrow(rreratio))){
+  thisdate = rreratio$date[i]
+  if(thisdate %in% rrerange$mtime)
+    rreratio[i, "rrerange"] = rrerange[rrerange$mtime == thisdate, "range"]
+  if(thisdate %in% tiderange$datetime)
+    rreratio[i, "tiderange"] = tiderange[tiderange$datetime == thisdate, "range"]
+}  
+rreratio["ci"]= rreratio$tiderange/rreratio$rrerange
+
+rreratio[c("cluster4", "cluster3", "cluster2")] = NA
+rreratio[!is.na(rreratio$ci), "cluster4"] = pam(scale(na.omit(rreratio$ci)), 4, 
+  cluster.only = TRUE)
+rreratio[!is.na(rreratio$ci), "cluster3"] = pam(scale(na.omit(rreratio$ci)), 3, 
+  cluster.only = TRUE)
+rreratio[!is.na(rreratio$ci), "cluster2"] = pam(scale(na.omit(rreratio$ci)), 2, 
+  cluster.only = TRUE)
+  
+clustertest = pamk(rreratio$ci,krange=1:4, scaling=TRUE)
+```
+
+The cluster analysis suggest that the constriction index does not provide a 
+reliable method of detecting closure.

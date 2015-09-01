@@ -14,7 +14,8 @@ opts_chunk$set(fig.width = 12, fig.height = 8, echo = FALSE)
 data(ctd)
 
 baseplot = function(p) 
-  ggplot(p, aes(x = depth, color = id)) + scale_y_continuous(breaks = pretty_breaks()) + scale_x_reverse() + coord_flip() + facet_wrap(~ dist, nrow = 1)
+  ggplot(p, aes(x = depth, color = id)) + scale_x_reverse() + coord_flip() +
+  scale_y_continuous(breaks = pretty_breaks()) +  facet_wrap(~ dist, nrow = 1)
 
 lyrs = list(
   ta = geom_line(aes(y = ta)),
@@ -61,21 +62,6 @@ for(p in ctd.plots$sa){
 for(p in ctd.plots$oa)
   print(p)
 ```
-
-### Dissolved Oxygen Percent Saturation
-
-```{r plot-ctd-sat}
-for(p in ctd.plots$sat)
-  print(p)
-```
-
-### Florescence
-
-```{r plot-ctd-fl}
-for(p in ctd.plots$fl)
-  print(p)
-```
-
 
 ## Interpolated CTD grids
 

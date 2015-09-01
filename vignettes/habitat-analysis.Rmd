@@ -1,0 +1,179 @@
+# Habitat Analysis
+
+```{r include = FALSE}
+#library(rremat)
+library(ggplot2)
+library(dplyr)
+library(RColorBrewer)
+require(knitr)
+opts_chunk$set(fig.width = 12, fig.height = 8, echo = FALSE, error = FALSE)
+```
+
+## Habitat definitions
+
+Water volume in the estuary is distributed such that the upper layers contain 
+the most habitat. Both standard and logarithmic color scales are shown.
+
+```{r volume-plot}
+data(volumes)
+cellvol = prod(attr(volumes, "resolution")[c("xres", "yres", "zres")])
+volumes["volume"] = cellvol*volumes$count
+ggplot(volumes[volumes$count>0,], aes(x = dist, y = elev, fill = volume)) + 
+  geom_tile() + scale_fill_gradientn(colours = brewer.pal(n=6,name = "Set1")) 
+ggplot(volumes[volumes$count>0,], aes(x = dist, y = elev, fill = log10(volume))) + 
+  geom_tile() + scale_fill_gradientn(colours = brewer.pal(n=6,name = "Set1")) 
+```
+
+Habitat is defined according to salmon lifecycle pathways. Pathway "B" is 
+shown here.
+
+### Temperature:
+
+| optimal | suitable | thermally stressful | unsuitable |
+|:-------:|:--------:|:-------------------:|:----------:|
+| $14-18^\circ$ C | $< 14^\circ$ C or $18-21^\circ$ C | $21--25^\circ$ C | $> 25^\circ$ C |
+
+### Dissolved Oxygen:
+
+| optimal | suitable | limited | unsuitable |
+|:-------:|:--------:|:-------:|:----------:|
+| $6-8$ mg/L | $4-6$ mg/L or $> 8$ mg/L | $3-4$ mg/L | $< 3$ mg/L |
+
+### Salinity:
+
+| isotonic | suitable | acclimated only |
+|:--------:|:--------:|:---------------:|
+| $10-15$ ppt | $< 10$ ppt | $> 15$ ppt |
+
+The habitat suitability curves are aggregated so that habitat is "optimal" if 
+all variables are within optimal ranges, "unsuitable" if any variables are 
+within unsuitable ranges, and "acceptable" otherwise.
+
+```{r define-habitat}
+ta.windows = list(
+  optimal = expression(x >= 14 & x <= 18),
+  suitable = expression(x < 14 | (x >= 18 & x < 21)),
+  stressful = expression(x >= 21 & x <= 25),
+  unsuitable = expression(x > 25)
+)
+ta_hsd = make_hsd(ta.windows, names(ta.windows))
+
+oa.windows = list(
+  no.impairment = expression(x >= 6 & x <= 8),
+  suitable = expression(x > 8 | (x >= 4 & x < 6)),
+  limited = expression(x >= 3 & x < 4),
+  unsuitable = expression(x < 3)
+)
+oa_hsd = make_hsd(oa.windows, names(oa.windows))
+
+sa.windows = list(
+  isotonic = expression(x >= 10 & x <= 15),
+  suitable = expression(x < 10),
+  acclimated.only = expression(x > 15)
+)
+sa_hsd = make_hsd(sa.windows, names(sa.windows))
+
+tot_hab = make_hsi(list(ta_hsd, oa_hsd, sa_hsd), function(xs) 
+  ifelse(any(xs == "unsuitable"), "unsuitable", 
+    ifelse(all(xs %in% c("optimal", "no.impairment", "isotonic")), "optimal", 
+    "acceptable")))
+```
+
+## Assessing habitat quality
+
+```{r calc-habitat}
+data(grids)
+pycnogrids = summarize(group_by(na.omit(grids), date, id, dist), 
+  sa.cline = mld(elev, sa, min.range = 5, max.z = 4))
+habgrids = join_volume(inner_join(grids, pycnogrids, 
+  by = c("date", "id", "dist")), volumes, cellvol)
+habgrids["habitat"] = apply(grids[c("ta", "oa", "sa")], 1, tot_hab)
+```
+
+Habitat can be summarized in a variety of different ways: we can consider the 
+estuary as whole, or divide it into segments based on distance from the river 
+mouth (lower reach, middle reach, upper reach) or vertical strata (surface
+layer, mid-column, bottom layer). An alternative vertical delineation is to
+compare the volume and quality of habitat above and below pycnocline. We can 
+also group transects by estuary mouth condition (i.e. open, closed, perched), 
+by season, or by inflow and ocean conditions (i.e. temperature).
+
+```{r summarize-habitat}
+# add closure meta data
+data(closures)
+habgrids["code"] = "O"
+for(d in unique(habgrids$date)){
+  ind = which(d >= closures$start & d <= closures$end)
+  if(length(ind) > 0)
+    habgrids[habgrids$date == d, "code"] = as.character(closures[ind, "code"])
+}
+habgrids["code"] = factor(habgrids$code)
+
+# add ctd meta data
+data(ctdmeta)
+gridid = as.character(interaction(habgrids$date, habgrids$id))
+metaid = as.character(interaction(as.Date(ctdmeta$start), ctdmeta$id))
+for(i in seq(nrow(ctdmeta))){
+  habgrids[gridid == metaid[i], "numcasts"] = ctdmeta[i, "numcasts"]
+}
+
+# strip out incomplete grids
+habgrids = na.omit(subset(habgrids, numcasts == 12))
+
+# total habitat
+overall = summarize_by_strata(habgrids, 
+  stratcols = c("date", "id", "habitat", "code"), 
+  summexpr = c(volume = ~sum(volume)))
+
+# stratify by wse
+wse = summarize_by_strata(summarize_by_strata(habgrids, 
+  stratcols = c("date", "id", "dist"), summexpr = c(wse = ~max(elev))),
+  stratcols = c("date", "id"), summexpr = c(wse = ~mean(wse)))
+overall = inner_join(overall, wse, by = c("date", "id"))
+wsez = seq(0.2, 1.8, by = 0.2) 
+overall["wsezone"] = stratify(overall$wse, wsez)
+
+# stratify summary by depth zones
+dz = c(-2, 0) # cut elev at -2, 0 
+habgrids["elevzone"] = stratify(habgrids$elev, dz)
+
+# stratify habitat by inner vs. out estuary
+lz = c(1700, 5800)
+habgrids["distzone"] = stratify(habgrids$dist, lz)
+
+# summarize by strata
+byelev = summarize_by_strata(habgrids, stratcols = c("date", "id", "elevzone", 
+  "habitat"), summexpr = c(volume = ~sum(volume)))
+bydist = summarize_by_strata(habgrids, stratcols = c("date", "id", "distzone", 
+  "habitat"), summexpr = c(volume = ~sum(volume)))
+
+  
+  
+```
+
+## Visualizing habitat
+
+```{r plot-hab}
+# total habitat
+ggplot(overall, aes(x = date, y = volume)) + 
+  geom_bar(aes(fill = habitat), stat="identity", position = "stack") +  
+  stat_summary(fun.y = sum, geom = "point") + facet_wrap(~ id) + coord_flip()
+
+ggplot(overall, aes(x = code, y = volume, fill = habitat)) + geom_boxplot() + 
+  facet_grid(habitat ~ code, scales = "free")
+
+ggplot(overall, aes(x = volume, fill = habitat)) + facet_grid(code ~ habitat) +
+  geom_histogram(binwidth = 1e5, color = "black")
+  
+ggplot(overall, aes(x = wse, y = volume, color = habitat)) + 
+  geom_smooth(method = "lm") + geom_point() + facet_wrap(~code, ncol = 1)
+  
+# stratify summary by depth zones
+ggplot(byelev, aes(x = factor(date):factor(id), y = volume, fill = habitat)) + 
+  geom_bar(stat = "identity") + facet_wrap(~ elevzone)
+
+# stratify habitat by inner vs. out estuary
+ggplot(bydist, aes(x = factor(date):factor(id), y = volume, fill = habitat)) + 
+  geom_bar(stat = "identity") + facet_wrap(~ distzone)
+
+```

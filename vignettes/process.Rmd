@@ -5,33 +5,33 @@ require(reval)
 require(rremat)
 ```
 
-## Processing water level pressure gauge data
+## Processing closure data
 
-This code reproduces the dataframe `wll` from the Matlab files in 
-`extdata/wll`.
+information on closures is contained in `extdata/closres/closures.csv`.
+This code reproduces the data frame `closures` which provides meta data for
+closures occurring during the monitoring periods.
 
-```{r process-wll}
-wllpath = system.file("extdata/wll", package = "rremat")
-wll.list = evalmany(function(fpath) read_rrewll(fpath, quiet = TRUE)[[1]], 
-  fpath = paste0(wllpath, "/", dir(wllpath)), collate = FALSE) 
-wll = merge_rrewll(wll.list)
-wll = wll[!is.nan(wll$depth),]
+```{r process-closures}
+closurepath = system.file("extdata/closures", package = "rremat")
+closures = read.csv(paste0(closurepath, "/closures.csv"), 
+  stringsAsFactors = FALSE, colClasses = c(start = "Date", end = "Date", 
+  code = "factor", note = "character"))
 ```
 
 ## Processing CTD transect meta data
 
-This code reproduces the dataframe `ctdmeta` from 
-`extdata/ctd/transectdatetimes.csv`, which provides meta data for the transect 
-data described in the following sections.
+CTD transect meta data is contained in `extdata/ctd/transectdatetimes.csv`.
+This code reproduces the dataframe `ctdmeta` which provides meta data for the 
+transect data described in the following sections.
 
 ```{r process-ctdmeta}
 ctdmpath = system.file("extdata/ctd_meta", package = "rremat")
 ctdm = read.csv(paste0(ctdmpath, "/transectdatetime.csv"), 
-  stringsAsFactors = FALSE)
+  stringsAsFactors = FALSE, colClasses = "character")
 ctdmeta = data.frame(id = factor(ctdm$id), 
-  start = as.POSIXct(paste(ctdm$date, ctdm$start), tz = "US/Pacific"), 
+  start = as.POSIXct(paste(ctdm$date, ctdm$start), tz = "US/Pacific"), # format = "%Y-%m-%d %H:%M"
   end = as.POSIXct(paste(ctdm$date, ctdm$end), tz = "US/Pacific"), 
-  note = ctdm$state)
+  numcasts = as.integer(ctdm$numcasts), note = ctdm$note)
 ```
 
 ## Processing CTD transect data
@@ -46,7 +46,6 @@ ctd.list = evalmany(function(fpath) read_rrectd(fpath, quiet = TRUE)[[1]],
 ctd = correct_dist(depth_from_elev(merge_rrectd(ctd.list)))
 ```
 
-
 ## Processing interpolated CTD data
 
 This code reproduces the dataframe `grids` from the matlab files
@@ -60,19 +59,46 @@ grid.list = evalmany(function(fpath) read_rrectdgrid(fpath, quiet = TRUE)[[1]],
 grids = merge_rrectd(grid.list)
 ```
 
-## Processing the volume lookup table
+## Processing the bathymetry
 
 This code reproduces the dataframe `volumes` from the text files in
-extdata/bathymetry.
+extdata/bathymetry. The volume lookup table is generated from a 1ft x 1ft 
+bathymetry raster with a vertical resolution as defined in 
+`bathymetry/zgrid.csv`.
 
 ```{r process-lookup}
 volpath = system.file("extdata/bathymetry", package = "rremat")
 volumes = read.csv(paste0(volpath, "/volumelookup.csv"))
+volumeres = read.csv(paste0(volpath, "/volumeres.csv"))
+attr(volumes, "resolution") = volumeres
+```
+
+The hypsometry is generated from the volume lookup table.
+
+```{r}
+hypsometry = data.frame(summarize(group_by(volumes, elev), 
+  area = sum(count)*prod(attr(volumes, "resolution")[c("xres", "yres")])))
+hypsometry["volume"] = cumsum(hypsometry$area*attr(volumes, "resolution")$zres)
+attr(hypsometry, "units") = data.frame(area = "square meters", 
+  volume = "cubic meters")
+```
+
+## Processing water level pressure gauge data
+
+This code reproduces the dataframe `wll` from the Matlab files in 
+`extdata/wll`.
+
+```{r process-wll}
+wllpath = system.file("extdata/wll", package = "rremat")
+wll.list = evalmany(function(fpath) read_rrewll(fpath, quiet = TRUE)[[1]], 
+  fpath = paste0(wllpath, "/", dir(wllpath)), collate = FALSE) 
+wll = merge_rrewll(wll.list)
+wll = wll[!is.nan(wll$depth),]
 ```
 
 ## Supplemental Data
 
-The following data sets are not produced in cooperation with the Largier Lab, 
+The following data sets are produced outside of the Largier Lab, 
 but provide critical supplemental data.
 
 ### Tide data
