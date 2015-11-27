@@ -1,16 +1,16 @@
 # Analysis of CTD cast data
 
 ```{r include = FALSE}
-#require(rremat)
-require(ggplot2)
-require(dplyr)
-require(reshape2)
-require(tidyr)
-require(cluster)
-require(fpc)
-require(abind)
-require(kml3d)
-require(knitr)
+#library(rremat)
+library(ggplot2)
+library(dplyr)
+library(reshape2)
+library(tidyr)
+library(cluster)
+library(fpc)
+library(abind)
+library(kml3d)
+library(knitr)
 opts_chunk$set(fig.width = 12, fig.height = 8, echo = FALSE, warning = FALSE)
 ```
 

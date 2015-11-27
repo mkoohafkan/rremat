@@ -5,7 +5,7 @@
 library(ggplot2)
 library(dplyr)
 library(RColorBrewer)
-require(knitr)
+library(knitr)
 opts_chunk$set(fig.width = 12, fig.height = 8, echo = FALSE, error = FALSE)
 ```
 
@@ -82,11 +82,11 @@ tot_hab = make_hsi(list(ta_hsd, oa_hsd, sa_hsd), function(xs)
 ## Assessing habitat quality
 
 ```{r calc-habitat}
+safe_mld = function(...) tryCatch(mld(...), error = function(e) NA)
 data(grids)
-pycnogrids = summarize(group_by(na.omit(grids), date, id, dist), 
-  sa.cline = mld(elev, sa, min.range = 5, max.z = 4))
-habgrids = join_volume(inner_join(grids, pycnogrids, 
-  by = c("date", "id", "dist")), volumes, cellvol)
+pycnogrids = summarize(group_by(grids, date, id, dist), 
+  sa.cline = safe_mld(elev, sa, min.range = 5, max.z = 4))
+habgrids = inner_join(grids, pycnogrids, by = c("date", "id", "dist"))
 habgrids["habitat"] = apply(grids[c("ta", "oa", "sa")], 1, tot_hab)
 ```
 
@@ -98,17 +98,23 @@ compare the volume and quality of habitat above and below pycnocline. We can
 also group transects by estuary mouth condition (i.e. open, closed, perched), 
 by season, or by inflow and ocean conditions (i.e. temperature).
 
-```{r summarize-habitat}
+
+```{r add-meta}
 # add closure meta data
 data(closures)
 habgrids["code"] = "O"
+habgrids["days.since.closure"] = NA
 for(d in unique(habgrids$date)){
   ind = which(d >= closures$start & d <= closures$end)
-  if(length(ind) > 0)
+  if(length(ind) > 0){
     habgrids[habgrids$date == d, "code"] = as.character(closures[ind, "code"])
+    if(as.character(closures[ind, "code"]) == "C")
+      habgrids[habgrids$date == d, "days.since.closure"] = 
+        habgrids[habgrids$date == d, "date"] - 
+        closures$start[max(which(d >= closures$start))]
+  }
 }
 habgrids["code"] = factor(habgrids$code)
-
 # add ctd meta data
 data(ctdmeta)
 gridid = as.character(interaction(habgrids$date, habgrids$id))
@@ -118,19 +124,20 @@ for(i in seq(nrow(ctdmeta))){
 }
 
 # strip out incomplete grids
-habgrids = na.omit(subset(habgrids, numcasts == 12))
+habgrids = subset(habgrids, numcasts == 12)
+```
 
+```{r summarize-habitat}
 # total habitat
 overall = summarize_by_strata(habgrids, 
-  stratcols = c("date", "id", "habitat", "code"), 
+  stratcols = c("date", "id", "habitat", "code", "days.since.closure"), 
   summexpr = c(volume = ~sum(volume)))
-
 # stratify by wse
 wse = summarize_by_strata(summarize_by_strata(habgrids, 
   stratcols = c("date", "id", "dist"), summexpr = c(wse = ~max(elev))),
   stratcols = c("date", "id"), summexpr = c(wse = ~mean(wse)))
 overall = inner_join(overall, wse, by = c("date", "id"))
-wsez = seq(0.2, 1.8, by = 0.2) 
+wsez = seq(0.4, 1.8, by = 0.2) 
 overall["wsezone"] = stratify(overall$wse, wsez)
 
 # stratify summary by depth zones
@@ -141,14 +148,19 @@ habgrids["elevzone"] = stratify(habgrids$elev, dz)
 lz = c(1700, 5800)
 habgrids["distzone"] = stratify(habgrids$dist, lz)
 
-# summarize by strata
-byelev = summarize_by_strata(habgrids, stratcols = c("date", "id", "elevzone", 
-  "habitat"), summexpr = c(volume = ~sum(volume)))
-bydist = summarize_by_strata(habgrids, stratcols = c("date", "id", "distzone", 
-  "habitat"), summexpr = c(volume = ~sum(volume)))
+# stratify  by pycnocline
+habgrids["pycnozone"] = "below"
+habgrids[is.na(habgrids$sa.cline) | habgrids$sa.cline < habgrids$elev, 
+  "pycnozone"] = "above"
+habgrids["pycnozone"] = factor(habgrids$pycnozone)
 
-  
-  
+# summarize by strata
+byelev = summarize_by_strata(habgrids, stratcols = c("date", "id","code", 
+  "elevzone", "habitat"), summexpr = c(volume = ~sum(volume)))
+bydist = summarize_by_strata(habgrids, stratcols = c("date", "id", "code",
+  "distzone", "habitat"), summexpr = c(volume = ~sum(volume)))
+bypycnocline = summarize_by_strata(habgrids, stratcols = c("date", "id", 
+  "code","pycnozone", "habitat"), summexpr = c(volume = ~sum(volume)))
 ```
 
 ## Visualizing habitat
@@ -157,23 +169,46 @@ bydist = summarize_by_strata(habgrids, stratcols = c("date", "id", "distzone",
 # total habitat
 ggplot(overall, aes(x = date, y = volume)) + 
   geom_bar(aes(fill = habitat), stat="identity", position = "stack") +  
-  stat_summary(fun.y = sum, geom = "point") + facet_wrap(~ id) + coord_flip()
+  stat_summary(fun.y = sum, geom = "point") + facet_wrap(~ code) + coord_flip()
 
 ggplot(overall, aes(x = code, y = volume, fill = habitat)) + geom_boxplot() + 
-  facet_grid(habitat ~ code, scales = "free")
+  facet_wrap(~habitat, scales = "free", ncol=1)
 
 ggplot(overall, aes(x = volume, fill = habitat)) + facet_grid(code ~ habitat) +
   geom_histogram(binwidth = 1e5, color = "black")
   
 ggplot(overall, aes(x = wse, y = volume, color = habitat)) + 
-  geom_smooth(method = "lm") + geom_point() + facet_wrap(~code, ncol = 1)
+  geom_smooth(method = "lm") + geom_point(aes(shape = id)) + 
+  facet_wrap(~ code, ncol = 1)
+  
+ggplot(overall, aes(x = days.since.closure, y = volume, color = habitat)) + 
+  geom_smooth() + geom_point() + facet_wrap(~ code, ncol = 1) + 
+  facet_wrap(~ habitat, ncol = 1, scales = "free_y")
+  
+#ggplot(overall, aes(x = factor(days.since.closure), y = volume, fill = habitat)) + 
+#  geom_boxplot() + facet_wrap(~ code, ncol = 1) + facet_wrap(~ habitat, 
+#  ncol = 1, scales = "free_y")
+ 
+ 
+ggplot(byelev, aes(x = code, y = volume, fill = habitat)) + geom_boxplot() + 
+  facet_grid(elevzone ~ habitat, scales = "free")
+
+ggplot(bypycnocline, aes(x = code, y = volume, fill = habitat)) + geom_boxplot() + 
+  facet_grid(pycnozone ~ habitat, scales = "free")
+
+  
+  
   
 # stratify summary by depth zones
-ggplot(byelev, aes(x = factor(date):factor(id), y = volume, fill = habitat)) + 
-  geom_bar(stat = "identity") + facet_wrap(~ elevzone)
+#ggplot(byelev, aes(x = factor(date):factor(id), y = volume, fill = habitat)) + 
+#  geom_bar(stat = "identity") + facet_wrap(~ elevzone)
+
+#ggplot(bypycnocline, aes(x = factor(date):factor(id), y = volume, fill = habitat)) + 
+#  geom_bar(stat = "identity") + facet_wrap(~ elevzone)
+  
 
 # stratify habitat by inner vs. out estuary
-ggplot(bydist, aes(x = factor(date):factor(id), y = volume, fill = habitat)) + 
-  geom_bar(stat = "identity") + facet_wrap(~ distzone)
+#ggplot(bydist, aes(x = factor(date):factor(id), y = volume, fill = habitat)) + 
+#  geom_bar(stat = "identity") + facet_wrap(~ distzone)
 
 ```

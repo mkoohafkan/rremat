@@ -1,14 +1,14 @@
 # Closure Analysis
 
 ```{r include = FALSE}
-#require(rremat)
-require(ggplot2)
-require(dplyr)
-require(tidyr)
-require(knitr)
-require(reshape2)
-require(cluster)
-require(fpc)
+#library(rremat)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(reshape2)
+library(cluster)
+library(fpc)
 opts_chunk$set(fig.width = 12, fig.height = 8, echo = FALSE)
 ```
 
