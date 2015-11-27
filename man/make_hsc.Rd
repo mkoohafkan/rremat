@@ -2,7 +2,7 @@
 % Please edit documentation in R/rrevaluate.r
 \name{make_hsc}
 \alias{make_hsc}
-\title{Habitat Suitability Curve Generator}
+\title{Continuous Habitat Suitability Function Generator}
 \usage{
 make_hsc(value, score, scoreleft = 0, scoreright = 0, spline.expand = 1L,
   ...)
@@ -35,7 +35,8 @@ increased to \code{spline.expand*length(value)}.}
 A function representing the habitat suitability curve
 }
 \description{
-Generate a habitat suitability curve given parameter values and scores.
+Generate a continuous habitat suitability function given parameter values
+and scores.
 }
 \details{
 When \code{spline.expand > 1}, an interpolating spline is first

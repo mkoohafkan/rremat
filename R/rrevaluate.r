@@ -116,13 +116,15 @@ make_hsi = function(hsc = list(), ag.fun = mean){
 
 #' Join volume information
 #' 
+#' Attach water volume information from estuary bathymetry to gridded data.
+#'
 #' @param d Dataframe containing data to have volume information attached to.
 #' @param volumes Dataframe containing cell counts. If \code{cellvol} is 
 #'   missing, must also containing the attribute "resolution" which is a 
 #'   dataframe or list with elements \code{xres}, \code{yres}, and \code{zres}.
 #' @param cellvol Numeric volume of cells desribed by \code{volumes}.
 #' @param joincols Columns to use when joining \code{volumes} to \code{d}.
-#' @countcol Column name containing cell count data in \code{volumes}.
+#' @param countcol Column name containing cell count data in \code{volumes}.
 #' @param volcol The name of the column containing volume data to be added to
 #'   \code{d}.
 #' @return The dataframe \code{d} with the additional column \code{volcol}.
@@ -138,9 +140,40 @@ join_volume = function(d, volumes, cellvol, joincols = c("elev", "dist"),
   ind = d
   d[, joincols] = as.character(unlist(d[, joincols]))
   volumes[, joincols] = as.character(unlist(volumes[, joincols]))
-  f = inner_join(d, volumes, by = c("elev", "dist"))
+  f = inner_join(d, volumes, by = joincols)
   f[, joincols] = as.numeric(unlist(f[, joincols]))
   ind[volcol] = f[[countcol]]*cellvol
+  ind
+}
+
+#' Join water-surface elevation information
+#' 
+#' Attach maximum water-surface elevation recorded in CTD transects to gridded 
+#'   data.
+#' 
+#' @param d Dataframe containing data to have water surface elevation attached 
+#'   to.
+#' @param ctd Dataframe containing ctd transects matching grids in \code{d}. 
+#' @param joincols Columns to use when joining \code{ctd} to \code{d}.
+#' @param wsein The name of the column in \code{ctd} containing water-surface 
+#'   elevation data.
+#' @param wseout The name of the column containing water-surface elevation data
+#'   to be added to \code{d}.
+#' @return The dataframe \code{d} with the additional column \code{wseout}.
+#'
+#' @importFrom dplyr inner_join
+#' @importFrom dplyr group_by_
+#' @importFrom dplyr summarize
+#' @export
+join_wse = function(d, ctd, joincols = c("date", "id"), 
+  wsein = "elev", wseout = "wse"){
+  if(missing(ctd))
+    data(ctd, envir = environment())
+  ind = d 
+  ctd["wsein"] = ctd[[wsein]]
+  wl = summarize(group_by_(ctd, .dots = joincols), wse = max(wsein))
+  wse = inner_join(d, wl, by = joincols)
+  ind[wseout] = wse$wse
   ind
 }
 

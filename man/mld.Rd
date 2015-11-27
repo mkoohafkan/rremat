@@ -4,7 +4,8 @@
 \alias{mld}
 \title{Mixing Layer Depth}
 \usage{
-mld(z, x = NULL, np = 2, min.range = 0, return.index = FALSE)
+mld(z, x = NULL, np = 2, min.range = 0, max.z = NULL,
+  return.index = FALSE)
 }
 \arguments{
 \item{z}{Vector of depths, or 2-column dataframe containing depths in first
@@ -18,6 +19,9 @@ of same length as \code{z}.}
 
 \item{min.range}{The minimum range in the value of \code{x} in order
 for a mixing layer to be detectable.}
+
+\item{max.z}{Maximum value of \code{z} to use when searching for mixing
+layer depth.}
 
 \item{return.index}{If TRUE, return the index of \code{z} corresponding to
 the mixing layer depth. Otherwise, return the depth.}

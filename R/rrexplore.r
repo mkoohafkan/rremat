@@ -48,7 +48,7 @@ mld = function(z, x = NULL, np = 2, min.range = 0, max.z = NULL,
     z = z[z <= max.z]
   }
   if(np > floor(0.5*length(z)))
-    stop("Argument 'np' is too large.")
+      stop("Argument 'np' is too large.")
   minx = min(x)
   maxx = max(x)
   rangex = maxx - minx
