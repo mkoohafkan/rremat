@@ -6,7 +6,7 @@ function Vs = interpctd(ctd, xn, zn, vns, xres, zres, interptype, extraptype)
   % xres = 0.1 ; % kilometers 
   % zres = 0.1 ;
   % interptype = 'natural'
-  % extraptype = 'none'
+  % extraptype = 'linear'
   
   % define interpolation grid
   surfacebound = 2.6 ; % based on max observed WSE
