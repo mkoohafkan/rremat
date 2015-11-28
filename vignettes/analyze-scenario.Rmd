@@ -1,0 +1,73 @@
+# Analyze event
+
+```
+thesegrids["habitat.ov"] = thesegrids$habitat
+thesegrids[thesegrids$habitat == "unsuitable" & 
+  thesegrids$habitat.acclimated == "acceptable", 
+  "habitat.ov"] = "acceptable.acclimated"
+
+#thesegrids["lowest.qual"] = factor(apply(thesegrids[c("ta.qual", "oa.qual", 
+#  "sa.qual")], 1, function(x) 
+#   paste(names(x)[which(x == "unsuitable")], collapse = ", ")))
+
+  
+
+# grids
+baseplot = function(p) 
+  ggplot(p, aes(x = dist, y = elev)) + 
+  xlim(min(thesegrids$dist), max(thesegrids$dist)) +
+    ylim(min(thesegrids$elev), max(thesegrids$elev))
+lyrs = list(
+  ta.qual = geom_raster(aes(fill = ta.qual)),
+  sa.qual = geom_raster(aes(fill = sa.qual)),
+  oa.qual = geom_raster(aes(fill = oa.qual)),
+  habitat = geom_raster(aes(fill = habitat)),
+  habitat.acclimated = geom_raster(aes(fill = habitat.acclimated)),
+  habitat.ov = geom_raster(aes(fill = habitat.ov))
+)
+habcolors = scale_fill_manual(values = setNames(brewer.pal(4, "RdYlGn"), 
+    c("unsuitable", "acceptable.acclimated", "acceptable", "optimal")))
+  
+baseplot(filter(thesegrids, date == as.Date("2013-10-07"))) + 
+  lyrs[["habitat.ov"]] + habcolors
+    
+# summarizing
+
+overall = summarize_by_strata(thesegrids, stratcols = c("date", "id",
+  "habitat.ov", "code", "days.since.closure"), 
+  summexpr = c(volume = ~sum(volume)))
+overall.spread = overall %>% spread(habitat.ov, volume, fill = 0) 
+overall.spread["total.volume"] = rowSums(overall.spread[c("acceptable", 
+  "acceptable.acclimated", "optimal", "unsuitable")])
+overall.gathered = overall.spread %>% gather(habitat.ov, volume, 
+  acceptable, acceptable.acclimated, optimal, unsuitable)
+overall.gathered["volume.frac"] = overall.gathered$volume/overall.gathered$total.volume
+overall.gathered["wse"] = inner_join(overall.gathered, 
+  unique(thesegrids[c("date", "wse")]), "date")$wse
+#overall.gathered["lowest.qual"] = inner_join(overall.gathered, 
+#  unique(thesegrids[c("date", "lowest.qual")]), "date")$lowest.qual
+
+ggplot(overall.gathered, aes(x = date, y = volume, color = habitat.ov)) + 
+  geom_line() +  geom_point() + 
+  scale_color_manual(values = setNames(brewer.pal(4, "RdYlGn"), 
+    c("unsuitable", "acceptable.acclimated", "acceptable", "optimal")))
+
+# stratify by transect locations
+a = unique(ctd$dist)
+acuts = a[-length(a)] + diff(a)/2
+thesegrids["transectid"] = stratify(thesegrids$dist, acuts) 
+
+bydist = summarize_by_strata(thesegrids, 
+  stratcols = c("date", "id", "dist", "habitat.ov", 
+  "days.since.closure"), summexpr = c(volume = ~sum(volume)))
+bydist.spread = bydist %>% spread(habitat.ov, volume, fill = 0) 
+bydist.spread["total.volume"] = rowSums(bydist.spread[c("acceptable", 
+  "acceptable.acclimated", "optimal", "unsuitable")])
+bydist.gathered = bydist.spread %>% gather(habitat, volume, 
+  acceptable, acceptable.acclimated, optimal, unsuitable)
+bydist.gathered["volume.frac"] = bydist.gathered$volume/bydist.gathered$total.volume
+bydist.gathered["wse"] = inner_join(bydist.gathered, 
+  unique(thesegrids[c("date", "wse")]), "date")$wse
+
+
+```

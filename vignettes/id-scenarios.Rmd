@@ -1,0 +1,96 @@
+```
+setwd("C:/Users/q0hecmck/Desktop/hablue")
+devtools::load_all("rremat")
+
+load(purl("rremat/vignettes/habitat-analysis.Rmd", tempfile())  
+```
+
+# add some identifiers for scenarios
+
+```
+isfall = function(x){
+  xx = as.numeric(format(x,"%m"))
+  ifelse(xx > 8 & xx < 11, TRUE, FALSE)
+}
+data(inflows)
+data(tides)
+data(wll)
+
+data(closures)
+closures["duration"] = closures$end - closures$start
+closures["isFall"] = isfall(closures$start)
+closures["mean.flow"] = NA
+closures["min.flow"] = NA
+closures["max.flow"] = NA
+closures["mean.tide"]= NA
+closures["min.tide"] = NA
+closures["max.tide"] = NA
+closures["range.tide"] = NA
+closures["mean.wll"]= NA
+closures["min.wll"] = NA
+closures["max.wll"] = NA
+closures["range.wll"] = NA
+
+for(i in seq(nrow(closures))){
+  sd = closures[i, "start"]
+  ed = closures[i, "end"]
+  thisflow = filter(inflows, as.Date(datetime) >= sd & 
+    as.Date(datetime) <= ed, gauge == "russianriver")
+  closures[i, "mean.flow"]= mean(thisflow$flow)
+  closures[i, "min.flow"] = min(thisflow$flow)
+  closures[i, "max.flow"] = max(thisflow$flow) 
+  thistide = filter(tides, as.Date(datetime) >= sd & 
+    as.Date(datetime) <= ed)  
+  closures[i, "mean.tide"] = mean(thistide$height)
+  closures[i, "min.tide"] = min(thistide$height)
+  closures[i, "max.tide"] = max(thistide$height)
+  closures[i, "range.tide"] = max(thistide$height) - min(thistide$height)
+  closures[i, "mean.wll"] = mean(thiswll$depth)
+  closures[i, "min.wll"] = min(thiswll$depth)
+  closures[i, "max.wll"] = max(thiswll$depth)
+  closures[i, "range.wll"] = max(thiswll$depth) - min(thiswll$depth)
+}
+
+data(ctdmeta)
+ctdmeta["isFall"] = isfall(ctdmeta$start)
+ctdmeta["mean.flow"] = NA
+ctdmeta["min.flow"] = NA
+ctdmeta["max.flow"] = NA
+ctdmeta["mean.tide"]= NA
+ctdmeta["min.tide"] = NA
+ctdmeta["max.tide"] = NA
+ctdmeta["mean.wll"]= NA
+ctdmeta["min.wll"] = NA
+ctdmeta["max.wll"] = NA
+for(i in seq(nrow(ctdmeta))){
+  sd = ctdmeta[i, "start"]
+  thisflow = filter(inflows, as.Date(datetime) == as.Date(sd), 
+    gauge == "russianriver")
+  ctdmeta[i, "mean.flow"]= mean(thisflow$flow)
+  ctdmeta[i, "min.flow"] = min(thisflow$flow)
+  ctdmeta[i, "max.flow"] = max(thisflow$flow) 
+  thistide = filter(tides, as.Date(datetime) == as.Date(sd))
+  ctdmeta[i, "mean.tide"]= mean(thistide$height)
+  ctdmeta[i, "min.tide"] = min(thistide$height)
+  ctdmeta[i, "max.tide"] = max(thistide$height)   
+}
+
+# analysis of single closure (case 2)
+thisclosure = closures[22,]
+
+thesegrids = filter(habgrids, 
+  date >=thisclosure$start & date <= thisclosure$end)
+
+load(purl("rremat/vignettes/analyze-scenario.Rmd", tempfile())  
+  
+```
+
+
+# analysis of Open conditions
+
+```
+filter(ctdmeta, code == "O", isFall)
+
+```
+
+

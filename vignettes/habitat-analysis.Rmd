@@ -73,8 +73,12 @@ sa.windows = list(
 )
 sa_hsd = make_hsd(sa.windows, names(sa.windows))
 
-tot_hab = make_hsi(list(ta_hsd, oa_hsd, sa_hsd), function(xs) 
+tot_hab_acclimated = make_hsi(list(ta_hsd, oa_hsd, sa_hsd), function(xs) 
   ifelse(any(xs == "unsuitable"), "unsuitable", 
+    ifelse(all(xs %in% c("optimal", "no.impairment", "isotonic")), "optimal", 
+    "acceptable")))
+tot_hab = make_hsi(list(ta_hsd, oa_hsd, sa_hsd), function(xs) 
+  ifelse(any(xs == "unsuitable") | any(xs == "acclimated.only"), "unsuitable", 
     ifelse(all(xs %in% c("optimal", "no.impairment", "isotonic")), "optimal", 
     "acceptable")))
 ```
@@ -87,7 +91,12 @@ data(grids)
 pycnogrids = summarize(group_by(grids, date, id, dist), 
   sa.cline = safe_mld(elev, sa, min.range = 5, max.z = 4))
 habgrids = inner_join(grids, pycnogrids, by = c("date", "id", "dist"))
+habgrids["ta.qual"] = sapply(habgrids$ta, ta_hsd)
+habgrids["sa.qual"] = sapply(habgrids$sa, sa_hsd)
+habgrids["oa.qual"] = sapply(habgrids$oa, oa_hsd)
 habgrids["habitat"] = apply(grids[c("ta", "oa", "sa")], 1, tot_hab)
+habgrids["habitat.acclimated"] = apply(grids[c("ta", "oa", "sa")], 1, 
+  tot_hab_acclimated)
 ```
 
 Habitat can be summarized in a variety of different ways: we can consider the 
@@ -121,10 +130,11 @@ gridid = as.character(interaction(habgrids$date, habgrids$id))
 metaid = as.character(interaction(as.Date(ctdmeta$start), ctdmeta$id))
 for(i in seq(nrow(ctdmeta))){
   habgrids[gridid == metaid[i], "numcasts"] = ctdmeta[i, "numcasts"]
+  
 }
 
 # strip out incomplete grids
-habgrids = subset(habgrids, numcasts == 12)
+habgrids = filter(habgrids, numcasts == 12)
 ```
 
 ```{r summarize-habitat}
