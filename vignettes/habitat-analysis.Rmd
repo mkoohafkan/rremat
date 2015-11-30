@@ -129,8 +129,7 @@ data(ctdmeta)
 gridid = as.character(interaction(habgrids$date, habgrids$id))
 metaid = as.character(interaction(as.Date(ctdmeta$start), ctdmeta$id))
 for(i in seq(nrow(ctdmeta))){
-  habgrids[gridid == metaid[i], "numcasts"] = ctdmeta[i, "numcasts"]
-  
+  habgrids[gridid == metaid[i], "numcasts"] = ctdmeta[i, "numcasts"]  
 }
 
 # strip out incomplete grids

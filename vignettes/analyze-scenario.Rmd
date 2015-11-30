@@ -6,11 +6,9 @@ thesegrids[thesegrids$habitat == "unsuitable" &
   thesegrids$habitat.acclimated == "acceptable", 
   "habitat.ov"] = "acceptable.acclimated"
 
-#thesegrids["lowest.qual"] = factor(apply(thesegrids[c("ta.qual", "oa.qual", 
-#  "sa.qual")], 1, function(x) 
-#   paste(names(x)[which(x == "unsuitable")], collapse = ", ")))
-
-  
+thesegrids["lowest.qual"] = apply(thesegrids[c("ta.qual", "oa.qual", 
+  "sa.qual")], 1, function(x) 
+   paste(names(x)[which(x == "unsuitable")], collapse = ", "))
 
 # grids
 baseplot = function(p) 
@@ -32,42 +30,119 @@ baseplot(filter(thesegrids, date == as.Date("2013-10-07"))) +
   lyrs[["habitat.ov"]] + habcolors
     
 # summarizing
-
+hablevels = unique(thesegrids$habitat.ov)
 overall = summarize_by_strata(thesegrids, stratcols = c("date", "id",
   "habitat.ov", "code", "days.since.closure"), 
-  summexpr = c(volume = ~sum(volume)))
-overall.spread = overall %>% spread(habitat.ov, volume, fill = 0) 
-overall.spread["total.volume"] = rowSums(overall.spread[c("acceptable", 
-  "acceptable.acclimated", "optimal", "unsuitable")])
-overall.gathered = overall.spread %>% gather(habitat.ov, volume, 
-  acceptable, acceptable.acclimated, optimal, unsuitable)
+  summexpr = c(volume = ~sum(volume), 
+  lowest.qual = ~paste(unique(lowest.qual), collapse=", ")))
+overall.spread = overall[!(names(overall) %in% "lowest.qual")] %>% 
+  spread(habitat.ov, volume, fill = 0) 
+overall.spread["total.volume"] = rowSums(overall.spread[hablevels])
+overall.gathered = overall.spread %>% gather_("habitat.ov", "volume", 
+  gather_cols = hablevels)
 overall.gathered["volume.frac"] = overall.gathered$volume/overall.gathered$total.volume
-overall.gathered["wse"] = inner_join(overall.gathered, 
-  unique(thesegrids[c("date", "wse")]), "date")$wse
-#overall.gathered["lowest.qual"] = inner_join(overall.gathered, 
-#  unique(thesegrids[c("date", "lowest.qual")]), "date")$lowest.qual
+overall.gathered = left_join(overall.gathered, 
+  unique(thesegrids[c("date", "wse")]), "date")
+overall.gathered = left_join(overall.gathered, 
+  overall[c("date", "habitat.ov", "lowest.qual")])
 
-ggplot(overall.gathered, aes(x = date, y = volume, color = habitat.ov)) + 
-  geom_line() +  geom_point() + 
+ggplot(overall.gathered, aes(x = days.since.closure, y = volume, 
+  color = habitat.ov)) + geom_line() + geom_point() + 
+  geom_line(aes(y = total.volume), color = "black", linetype = "dashed") + 
+  geom_text(aes(label = lowest.qual), color = "black", size = 4, vjust = 1) +
   scale_color_manual(values = setNames(brewer.pal(4, "RdYlGn"), 
-    c("unsuitable", "acceptable.acclimated", "acceptable", "optimal")))
+    c("unsuitable", "acceptable.acclimated", "acceptable", "optimal"))) + theme(legend.position = "bottom")
 
 # stratify by transect locations
+
+hablevels = unique(thesegrids$habitat.ov)
 a = unique(ctd$dist)
 acuts = a[-length(a)] + diff(a)/2
 thesegrids["transectid"] = stratify(thesegrids$dist, acuts) 
+levels(thesegrids$transectid) <- a
+bytid = summarize_by_strata(thesegrids, 
+  stratcols = c("date", "id", "transectid", "habitat.ov", 
+  "days.since.closure"), summexpr = c(volume = ~sum(volume),
+  lowest.qual = ~paste(unique(lowest.qual), collapse=", ")))
+bytid.spread = bytid[!(names(overall) %in% "lowest.qual")] %>% 
+  spread(habitat.ov, volume, fill = 0) 
+bytid.spread["total.volume"] = rowSums(bytid.spread[hablevels])
+bytid.gathered = bytid.spread %>% gather_("habitat.ov", "volume", hablevels)
+bytid.gathered["volume.frac"] = bytid.gathered$volume/bytid.gathered$total.volume
+bytid.gathered = left_join(bytid.gathered, 
+  unique(thesegrids[c("date", "transectid", "wse")]), c("transectid","date"))
+bytid.gathered = left_join(bytid.gathered, 
+  bytid[c("date", "transectid", "habitat.ov", "lowest.qual")], 
+  c("transectid","date", "habitat.ov"))
 
+ggplot(bytid.gathered, aes(x = days.since.closure, y = volume, 
+  color = habitat.ov)) + geom_line() + geom_point() + 
+  geom_line(aes(y = total.volume), color = "black", linetype = "dashed") + 
+  geom_text(aes(label = lowest.qual), color = "black", size = 4, vjust = 1) +
+  scale_color_manual(values = setNames(brewer.pal(4, "RdYlGn"), 
+    c("unsuitable", "acceptable.acclimated", "acceptable", "optimal"))) +
+  facet_wrap(~transectid) + theme(legend.position = "bottom")
+```
+
+# mapping
+
+```
+library(rgdal)
+
+hablevels = unique(thesegrids$habitat.ov)
 bydist = summarize_by_strata(thesegrids, 
   stratcols = c("date", "id", "dist", "habitat.ov", 
-  "days.since.closure"), summexpr = c(volume = ~sum(volume)))
-bydist.spread = bydist %>% spread(habitat.ov, volume, fill = 0) 
-bydist.spread["total.volume"] = rowSums(bydist.spread[c("acceptable", 
-  "acceptable.acclimated", "optimal", "unsuitable")])
-bydist.gathered = bydist.spread %>% gather(habitat, volume, 
-  acceptable, acceptable.acclimated, optimal, unsuitable)
-bydist.gathered["volume.frac"] = bydist.gathered$volume/bydist.gathered$total.volume
-bydist.gathered["wse"] = inner_join(bydist.gathered, 
-  unique(thesegrids[c("date", "wse")]), "date")$wse
+  "days.since.closure"), summexpr = c(volume = ~sum(volume),
+  lowest.qual = ~paste(unique(lowest.qual), collapse=", ")))
+bydist.spread = bydist[!(names(overall) %in% "lowest.qual")] %>% 
+  spread(habitat.ov, volume, fill = 0) 
+bydist.spread["total.volume"] = rowSums(bydist.spread[hablevels])
+for(h in hablevels)
+bydist.spread[paste0("frac.", h)] = bydist.spread[[h]]/bydist.spread$total.volume 
+bydist.spread = left_join(bydist.spread, unique(thesegrids[c("date", "dist", 
+  "wse")]), c("dist","date"))
+bydist.spread = left_join(bydist.spread, unique(thesegrids[c("date", "dist", 
+  "wse")]), c("dist","date"))
 
+#bydist.gathered = bydist.spread %>% gather_("habitat.ov", "volume", hablevels)
+#bydist.gathered["volume.frac"] = bydist.gathered$volume/bydist.gathered$total.volume
+#bydist.gathered = left_join(bydist.gathered, 
+#  unique(thesegrids[c("date", "dist", "wse")]), c("dist","date"))
+#bydist.gathered = left_join(bydist.gathered, 
+#  bydist[c("date", "dist", "habitat.ov", "lowest.qual")], 
+#  c("dist","date", "habitat.ov"))
+
+library(arcpyr)
+for(thisdate in unique(paste(bydist$date))){
+  # write grid for this date
+  thisgrid = filter(bydist.spread, date == thisdate)
+  thisgrid$dist = factor(thisgrid$dist)
+  thisid = as.character(unique(thisgrid$id))
+  suffix = paste0("_", gsub("-", "", thisdate), thisid)
+  thiswse = unique(thisgrid$wse)
+  write.csv(thisgrid, file = "C:/GIS workspace/RRE/rrzone_hab.txt", 
+    row.names = FALSE)  
+  # copy grid to gdb
+  CopyRows_management("C:/GIS workspace/RRE/rrzone_hab.txt", 
+    "C:/GIS workspace/RRE/habitat.gdb/rrzone_hab")
+  # define wse extent
+  RasterCalculator(paste0('rastermask = Con(bathy <= ', thiswse, ', 1)'), 
+    list(bathy = "C:/GIS workspace/RRE/habitat.gdb/bathymetry_NGVD_meters"),
+    list(rastermask = "C:/GIS workspace/RRE/habitat.gdb/rastermask"))
+  RasterToPolygon_conversion("C:/GIS workspace/RRE/habitat.gdb/rastermask", 
+    "C:/GIS workspace/RRE/habitat.gdb/polymask", "SIMPLIFY", "VALUE")
+  # clip zones to wse extent
+  Clip_analysis("C:/GIS workspace/RRE/habitat.gdb/markerzones_poly_dissolve", 
+    "C:/GIS workspace/RRE/habitat.gdb/polymask", 
+    paste0("C:/GIS workspace/RRE/habitat.gdb/rrzone", suffix))
+  # join habitat data to clipped zones
+  JoinField_management(paste0("C:/GIS workspace/RRE/habitat.gdb/rrzone", suffix), 
+    "gridcode", "C:/GIS workspace/RRE/habitat.gdb/rrzone_hab", "dist")
+  # clean up
+  Delete_management("C:/GIS workspace/RRE/habitat.gdb/rastermask")
+  Delete_management("C:/GIS workspace/RRE/habitat.gdb/polymask")
+  Delete_management("C:/GIS workspace/RRE/habitat.gdb/rrzone_hab")
+  file.remove("C:/GIS workspace/RRE/rrzone_hab.txt")
+}
 
 ```

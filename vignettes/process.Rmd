@@ -103,7 +103,8 @@ above the water-surface elevation (`elev > wse`) is removed.
 grids = join_wse(join_volume(grids, volumes), ctd)
 bathymask = grids$volume > 0
 wsemask = grids$elev <= grids$wse
-grids = subsets(grids, volume > 0 & elev <= wse)
+grids = filter(grids[c("date", "id", "dist", "wse", "elev", "sa", "ta", "oa",
+  "volume")], volume > 0 & elev <= wse)
 ```
 
 ## Processing water level pressure gauge data

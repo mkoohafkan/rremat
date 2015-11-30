@@ -1,7 +1,4 @@
 ```
-setwd("C:/Users/q0hecmck/Desktop/hablue")
-devtools::load_all("rremat")
-
 load(purl("rremat/vignettes/habitat-analysis.Rmd", tempfile())  
 ```
 
@@ -35,7 +32,7 @@ for(i in seq(nrow(closures))){
   sd = closures[i, "start"]
   ed = closures[i, "end"]
   thisflow = filter(inflows, as.Date(datetime) >= sd & 
-    as.Date(datetime) <= ed, gauge == "russianriver")
+    as.Date(datetime) <= ed, gauge == "russian river")
   closures[i, "mean.flow"]= mean(thisflow$flow)
   closures[i, "min.flow"] = min(thisflow$flow)
   closures[i, "max.flow"] = max(thisflow$flow) 
@@ -45,6 +42,8 @@ for(i in seq(nrow(closures))){
   closures[i, "min.tide"] = min(thistide$height)
   closures[i, "max.tide"] = max(thistide$height)
   closures[i, "range.tide"] = max(thistide$height) - min(thistide$height)
+  thiswll = filter(wll, as.Date(mtime) >= sd & as.Date(mtime) <= ed, 
+    site == "river mouth")  
   closures[i, "mean.wll"] = mean(thiswll$depth)
   closures[i, "min.wll"] = min(thiswll$depth)
   closures[i, "max.wll"] = max(thiswll$depth)
@@ -65,7 +64,7 @@ ctdmeta["max.wll"] = NA
 for(i in seq(nrow(ctdmeta))){
   sd = ctdmeta[i, "start"]
   thisflow = filter(inflows, as.Date(datetime) == as.Date(sd), 
-    gauge == "russianriver")
+    gauge == "russian river")
   ctdmeta[i, "mean.flow"]= mean(thisflow$flow)
   ctdmeta[i, "min.flow"] = min(thisflow$flow)
   ctdmeta[i, "max.flow"] = max(thisflow$flow) 
@@ -76,7 +75,7 @@ for(i in seq(nrow(ctdmeta))){
 }
 
 # analysis of single closure (case 2)
-thisclosure = closures[22,]
+thisclosure = closures[29,]
 
 thesegrids = filter(habgrids, 
   date >=thisclosure$start & date <= thisclosure$end)
