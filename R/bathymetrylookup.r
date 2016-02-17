@@ -1,5 +1,27 @@
+#' Generate the volume lookup table
+#'
+#' Generate the volume lookup table from the bathymetry raster and zones 
+#' shapefile. Computes total volume and volume of each depth category: 
+#' littoral, surface limnetic, subsurface limnetic, and profundal.
+#'
+#' @param bathymetry_path File path to the bathymetry raster. Geodatabases are
+#'   supported.
+#' @param zones_path File path to the zones shapefile. Geodatabases are
+#'   supported.
+#' @param wse Vector of water surface elevations at which to compute volume.
+#' @param scratchfolder Folder to use as a scratch workspace. Must be an actual 
+#'   folder; geodatabases are not supported.
+#' @return The volume lookup table (dataframe).
+#'
+#' @importFrom dplyr right_join
+#' @importFrom magrittr "%>%"
+#' @export
 generate_volume_table = function(bathymetry_path, zones_path, wse, 
   scratchfolder = tempdir()){
+  if(!require(arcpyr))
+    stop("library 'arcpyr' not installed.")
+  arcpy.initialize()
+  sa.initialize()
   bathymetry_path = file.path(dirname(bathymetry_path), 
     basename(bathymetry_path))
   zones_path = file.path(dirname(zones_path), basename(zones_path))
@@ -9,6 +31,7 @@ generate_volume_table = function(bathymetry_path, zones_path, wse,
   for(w in wse){
     PythonInR::pyExec(paste("wse =", w))
     for(z in wse){
+      print(paste0("z = ", z, ", w = ", w))
       if(z > w)
         next
       PythonInR::pyExec(paste("depth =", z))
@@ -56,10 +79,10 @@ generate_volume_table = function(bathymetry_path, zones_path, wse,
             resolution = cellvol)
 }
 
-devtools::load_all("arcpyr")
-arcpy.initialize()
-sa.initialize()
-library(dplyr)
-bathymetry_path = "C:/GIS workspace/RRE/habitat.gdb/bathymetry_NGVD_meters"
-zones_path = "C:/GIS workspace/RRE/habitat.gdb/markerzones_poly_dissolve"
-wse = seq(-15.8, 2.6, by = 0.1)
+#devtools::load_all("arcpyr")
+#arcpy.initialize()
+#sa.initialize()
+#library(dplyr)
+#bathymetry_path = "C:/GIS workspace/RRE/habitat.gdb/bathymetry_NGVD_meters"
+#zones_path = "C:/GIS workspace/RRE/habitat.gdb/markerzones_poly_dissolve"
+#wse = seq(-15.8, 2.6, by = 0.1)
