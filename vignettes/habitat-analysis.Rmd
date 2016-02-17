@@ -6,6 +6,8 @@ library(ggplot2)
 library(dplyr)
 library(RColorBrewer)
 library(knitr)
+library(scales)
+library(tidyr)
 opts_chunk$set(fig.width = 12, fig.height = 8, echo = FALSE, error = FALSE)
 ```
 
@@ -19,93 +21,162 @@ data(volumes)
 cellvol = prod(attr(volumes, "resolution")[c("xres", "yres", "zres")])
 volumes["volume"] = cellvol*volumes$count
 ggplot(volumes[volumes$count>0,], aes(x = dist, y = elev, fill = volume)) + 
-  geom_tile() + scale_fill_gradientn(colours = brewer.pal(n=6,name = "Set1")) 
+  geom_tile() + scale_fill_gradientn(colours = brewer.pal(n=6,name = "Set1")) +
+  scale_y_continuous("elevation above NAVD29 (m)", labels = comma) +
+  xlab("Distance from river mouth (m)")
+
+ggsave(paste0("C:/Users/Michael/Desktop/john_plots/", "volumedistribution.png"),
+  width = 10, height = 8)
 ggplot(volumes[volumes$count>0,], aes(x = dist, y = elev, fill = log10(volume))) + 
   geom_tile() + scale_fill_gradientn(colours = brewer.pal(n=6,name = "Set1")) 
 ```
 
-Habitat is defined according to salmon lifecycle pathways. Pathway "B" is 
-shown here.
+Habitat quality for juvenile salmonids is defined according to the 
+specifications outlined by the WQ Parameter and Habitat Productivity Technical 
+Group (10/6/2015):
 
 ### Temperature:
 
-| optimal | suitable | thermally stressful | unsuitable |
-|:-------:|:--------:|:-------------------:|:----------:|
-| $14-18^\circ$ C | $< 14^\circ$ C or $18-21^\circ$ C | $21--25^\circ$ C | $> 25^\circ$ C |
+| optimal growth  | positive growth (suitable)        | no or negative growth (stressful) | unsuitable     |
+|:---------------:|:---------------------------------:|:---------------------------------:|:--------------:|
+| $14-18^\circ$ C | $< 14^\circ$ C or $18-21^\circ$ C | $21--25^\circ$ C                  | $> 25^\circ$ C |
 
 ### Dissolved Oxygen:
 
-| optimal | suitable | limited | unsuitable |
-|:-------:|:--------:|:-------:|:----------:|
-| $6-8$ mg/L | $4-6$ mg/L or $> 8$ mg/L | $3-4$ mg/L | $< 3$ mg/L |
+| function without impairment | suitable   | limited by lack of oxygen | unsuitable |
+|:---------------------------:|:----------:|:-------------------------:|:----------:|
+| $> 6$ mg/L                  | $4-6$ mg/L | $3-4$ mg/L                | $< 3$ mg/L |
 
 ### Salinity:
 
-| isotonic | suitable | acclimated only |
-|:--------:|:--------:|:---------------:|
-| $10-15$ ppt | $< 10$ ppt | $> 15$ ppt |
+| ion importing | ion neutral | induced ion exporting | ion exporting |
+|:-------------:|:-----------:|:---------------------:|:-------------:|
+| $< 10$ ppt    | $10-15$ ppt | $15-28$ ppt           | $> 28$ ppt    |
 
-The habitat suitability curves are aggregated so that habitat is "optimal" if 
-all variables are within optimal ranges, "unsuitable" if any variables are 
-within unsuitable ranges, and "acceptable" otherwise.
+Overall habitat is assessed to fall into one of 13 categories:
+
+| category                         | Description                                                                             |
+|:---------------------------------|:----------------------------------------------------------------------------------------|
+| Optimal                          | all of: optimal growth (T), ion importing (S), function without impairment (DO)         |
+| Unsuitable                       | any one of: unsuitable (T), ion-exporting (S), unsuitable (DO)                          |
+| Sub-optimal (T)                  | positive growth (T), (S) and (DO) as in "optimal" category                              |
+| Stressful (T)                    | no or negative growth (T), (S) and (DO) as in "optimal" category                        |
+| Sub-optimal (DO)                 | either suitable or limited by lack of oxygen (DO), (T) and (S) as in "optimal" category |
+| Sub-optimal (S)                  | either ion neutral or induced ion exporting (S), (T) and (DO) as in "optimal" category  |
+| Sub-optimal (T, DO)              | (S) as in "optimal" category                                                            |
+| Sub-optimal (T, S)               | (DO) as in "optimal" category                                                           |
+| Sub-optimal (DO, S)              | (T) as in "optimal" category                                                            |
+| Stressful sub-optimal (T, DO)    | (S) as in "optimal" category                                                            |
+| Stressful sub-optimal (T, S)     | (DO) as in "optimal" category                                                           |
+| Sub-optimal (T, S, DO)           | Suitable (T), (S) and (DO) as in "sub-optimal" categories                               |
+| Stressful sub-optimal (T, S, DO) | Stressful (T), (S) and (DO) as in "sub-optimal" categories                              |
+
+Habitat quality can additionally be assessed based on water depth:
+
+| Category                  | Description                                                                                                   | Criteria                               |
+|:--------------------------|:--------------------------------------------------------------------------------------------------------------|:--------------------------------------:|
+| Shallow/shoal (Littoral)  | high prey availability; high avian predation risk                                                             | Depth < 2m and \max{depth} < 2m        |
+| Surface (Limnetic)        | lower prey availability; high avian predation risk                                                            | $depth < 2m$ and $\max{depth} \geq 2m$ |
+| Subsurface (Limnetic)     | high prey availability where sediment <5m; low prey availability where depth >5m); lower avian predation risk | $2m \leq depth < 5m$                   |
+| Stagnant (Profundal) zone | unsuitable due to hypoxia/anoxia; low avian predation risk                                                    | $depth \geq 5m$                        |
+
 
 ```{r define-habitat}
 ta.windows = list(
-  optimal = expression(x >= 14 & x <= 18),
-  suitable = expression(x < 14 | (x >= 18 & x < 21)),
-  stressful = expression(x >= 21 & x <= 25),
-  unsuitable = expression(x > 25)
+  "optimal" = expression(x >= 14 & x <= 18),
+  "suitable" = expression(x < 14 | (x >= 18 & x <= 21)),
+  "stressful" = expression(x > 21 & x <= 25),
+  "unsuitable" = expression(x > 25)
 )
 ta_hsd = make_hsd(ta.windows, names(ta.windows))
 
 oa.windows = list(
-  no.impairment = expression(x >= 6 & x <= 8),
-  suitable = expression(x > 8 | (x >= 4 & x < 6)),
-  limited = expression(x >= 3 & x < 4),
-  unsuitable = expression(x < 3)
+  "no impairment" = expression(x >= 6),
+  "suitable" = expression(x >= 4 & x < 6),
+  "limited" = expression(x >= 3 & x < 4),
+  "unsuitable" = expression(x < 3)
 )
 oa_hsd = make_hsd(oa.windows, names(oa.windows))
 
 sa.windows = list(
-  isotonic = expression(x >= 10 & x <= 15),
-  suitable = expression(x < 10),
-  acclimated.only = expression(x > 15)
+  "ion importing" = expression(x < 10),
+  "ion neutral" = expression(x >= 10 & x <= 15),
+  "induced ion exporting" = expression(x > 15 & x <= 28),
+  "ion exporting" = expression(x > 28)
 )
 sa_hsd = make_hsd(sa.windows, names(sa.windows))
 
-tot_hab_acclimated = make_hsi(list(ta_hsd, oa_hsd, sa_hsd), function(xs) 
-  ifelse(any(xs == "unsuitable"), "unsuitable", 
-    ifelse(all(xs %in% c("optimal", "no.impairment", "isotonic")), "optimal", 
-    "acceptable")))
-tot_hab = make_hsi(list(ta_hsd, oa_hsd, sa_hsd), function(xs) 
-  ifelse(any(xs == "unsuitable") | any(xs == "acclimated.only"), "unsuitable", 
-    ifelse(all(xs %in% c("optimal", "no.impairment", "isotonic")), "optimal", 
-    "acceptable")))
+
+hab_cat = function(xs){ # xs = c(ta, oa, sa)
+  if(any(xs %in% c("unsuitable", "ion exporting")))
+    "unsuitable"
+  else if(all(xs %in% c("optimal", "no impairment", "ion importing")))
+    "optimal"  
+  else if(xs[[1]] == "suitable" && all(xs[2:3] %in% c("no impairment", "ion importing")))
+    "sub-optimal (T)"
+  else if(xs[[1]] == "stressful" && all(xs[2:3] %in% c("no impairment", "ion importing")))
+    "stressful (T)"
+  else if(xs[[2]] %in% c("suitable", "limited") && all(xs[c(1,3)] %in% c("optimal", "ion importing")))
+    "sub-optimal (DO)"
+  else if(all(xs[1:2] %in% c("optimal", "no impairment")) && xs[[3]] %in% c("ion neutral", "induced ion exporting"))
+    "sub-optimal (S)"
+  else if(all(xs[1:2] %in% c("suitable", "limited")) && xs[[3]] %in% c("ion importing"))
+    "sub-optimal (T, DO)"
+  else if(all(xs[c(1,3)] %in% c("suitable", "ion neutral", "induced ion exporting")) && xs[[2]] %in% c("no impairment"))
+    "sub-optimal (T, S)"
+  else if(all(xs[2:3] %in% c("suitable", "limited", "ion neutral", "induced ion exporting")) && xs[[1]] %in% c("optimal"))  
+    "sub-optimal (DO, S)" 
+  else if(xs[[1]] %in% c("stressful") && xs[[2]] %in% c("suitable", "limited") && xs[[3]] %in% c("ion importing"))
+    "stressful sub-optimal (T, DO)"
+  else if(all(xs[c(1, 3)] %in% c("stressful", "ion neutral", "induced ion exporting")) && xs[[2]] %in% c("no impairment"))
+    "stressful sub-optimal (T, S)"
+  else if(all(xs[2:3] %in% c("suitable", "limited", "ion neutral", "induced ion exporting")) && xs[[1]] %in% c("suitable"))
+    "sub-optimal (T, DO, S)"
+  else if(all(xs[2:3] %in% c("suitable", "limited", "ion neutral", "induced ion exporting")) && xs[[1]] %in% c("stressful"))
+    "stressful sub-optimal (T, DO, S)"
+  else
+    stop("no category for ", paste(c("ta", "oa", "sa"), xs, sep = " = ", collapse = ", "))
+}
+
+tot_hab = make_hsi(list(ta_hsd, oa_hsd, sa_hsd), hab_cat)
+
+depth_cat = function(z, maxz){
+  ifelse(z < 2 & maxz < 2, "littoral",
+  ifelse(z < 2 & maxz >= 2, "surface limnetic",
+  ifelse(z >= 2 & z < 5 & maxz >= 2, "subsurface limnetic",
+  ifelse(z >= 5 & maxz >= 2, "profundal", NA))))
+}
 ```
 
 ## Assessing habitat quality
 
 ```{r calc-habitat}
-safe_mld = function(...) tryCatch(mld(...), error = function(e) NA)
 data(grids)
-pycnogrids = summarize(group_by(grids, date, id, dist), 
-  sa.cline = safe_mld(elev, sa, min.range = 5, max.z = 4))
-habgrids = inner_join(grids, pycnogrids, by = c("date", "id", "dist"))
+bedgrids = summarize(group_by(grids, date, id, dist), bedelev = min(elev))
+habgrids = inner_join(grids, bedgrids, by = c("date", "id", "dist"))
+habgrids["depth"] = habgrids$wse - habgrids$elev
+habgrids["max.depth"] = habgrids$wse - habgrids$bedelev
+habgrids["depth.zone"] = factor(ifelse(habgrids$depth < 2,
+  "surface (< 2m below surface)", "subsurface (> 2m below surface)"), 
+  levels = c("surface (< 2m below surface)", "subsurface (> 2m below surface)"))
+habgrids["depth.qual"] = factor(depth_cat(habgrids$depth, habgrids$max.depth),
+  levels = c("littoral", "surface limnetic", "subsurface limnetic", "profundal"))
 habgrids["ta.qual"] = sapply(habgrids$ta, ta_hsd)
 habgrids["sa.qual"] = sapply(habgrids$sa, sa_hsd)
 habgrids["oa.qual"] = sapply(habgrids$oa, oa_hsd)
-habgrids["habitat"] = apply(grids[c("ta", "oa", "sa")], 1, tot_hab)
-habgrids["habitat.acclimated"] = apply(grids[c("ta", "oa", "sa")], 1, 
-  tot_hab_acclimated)
+habgrids["habitat"] = factor(apply(grids[c("ta", "oa", "sa")], 1, tot_hab),
+  levels = c("optimal", "sub-optimal (T)", "sub-optimal (DO)", 
+    "sub-optimal (S)", "sub-optimal (T, DO)", "sub-optimal (T, S)",
+    "sub-optimal (DO, S)", "sub-optimal (T, DO, S)", "stressful (T)", 
+    "stressful sub-optimal (T, DO)", "stressful sub-optimal (T, S)", 
+    "stressful sub-optimal (T, DO, S)", "unsuitable"))
 ```
 
 Habitat can be summarized in a variety of different ways: we can consider the 
 estuary as whole, or divide it into segments based on distance from the river 
-mouth (lower reach, middle reach, upper reach) or vertical strata (surface
-layer, mid-column, bottom layer). An alternative vertical delineation is to
-compare the volume and quality of habitat above and below pycnocline. We can 
-also group transects by estuary mouth condition (i.e. open, closed, perched), 
-by season, or by inflow and ocean conditions (i.e. temperature).
+mouth (lower reach, middle reach, upper reach) or vertical strata (e.g. by 
+depth categories). We can also group transects by estuary mouth condition (i.e. 
+open, closed, perched), by season, or by inflow (e.g. high or low inflow).
 
 
 ```{r add-meta}
@@ -136,45 +207,29 @@ for(i in seq(nrow(ctdmeta))){
 habgrids = filter(habgrids, numcasts == 12)
 ```
 
-```{r summarize-habitat}
+```{r summarize-habitat, eval = FALSE}
 # total habitat
 overall = summarize_by_strata(habgrids, 
   stratcols = c("date", "id", "habitat", "code", "days.since.closure"), 
   summexpr = c(volume = ~sum(volume)))
-# stratify by wse
-wse = summarize_by_strata(summarize_by_strata(habgrids, 
-  stratcols = c("date", "id", "dist"), summexpr = c(wse = ~max(elev))),
-  stratcols = c("date", "id"), summexpr = c(wse = ~mean(wse)))
-overall = inner_join(overall, wse, by = c("date", "id"))
-wsez = seq(0.4, 1.8, by = 0.2) 
-overall["wsezone"] = stratify(overall$wse, wsez)
 
-# stratify summary by depth zones
-dz = c(-2, 0) # cut elev at -2, 0 
-habgrids["elevzone"] = stratify(habgrids$elev, dz)
+# stratify by depth (above/below 2m) and by depth qual
+bydepthqual = summarize_by_strata(habgrids, stratcols = c("date", "id", "code", 
+  "depth.qual", "habitat"), summexpr = c(volume = ~sum(volume)))
+habgrids["depth.zone"] = ifelse(habgrids$depth < 2, "surface", "subsurface")
+bydepth = summarize_by_strata(habgrids, stratcols = c("date", "id", "code", 
+  "depth.zone", "habitat"), summexpr = c(volume = ~sum(volume)))
 
 # stratify habitat by inner vs. out estuary
-lz = c(1700, 5800)
-habgrids["distzone"] = stratify(habgrids$dist, lz)
-
-# stratify  by pycnocline
-habgrids["pycnozone"] = "below"
-habgrids[is.na(habgrids$sa.cline) | habgrids$sa.cline < habgrids$elev, 
-  "pycnozone"] = "above"
-habgrids["pycnozone"] = factor(habgrids$pycnozone)
-
-# summarize by strata
-byelev = summarize_by_strata(habgrids, stratcols = c("date", "id","code", 
-  "elevzone", "habitat"), summexpr = c(volume = ~sum(volume)))
-bydist = summarize_by_strata(habgrids, stratcols = c("date", "id", "code",
-  "distzone", "habitat"), summexpr = c(volume = ~sum(volume)))
-bypycnocline = summarize_by_strata(habgrids, stratcols = c("date", "id", 
-  "code","pycnozone", "habitat"), summexpr = c(volume = ~sum(volume)))
+#lz = c(1700, 5800)
+#habgrids["distzone"] = stratify(habgrids$dist, lz)
+#bydist = summarize_by_strata(habgrids, stratcols = c("date", "id", "code",
+#  "distzone", "habitat"), summexpr = c(volume = ~sum(volume)))
 ```
 
 ## Visualizing habitat
 
-```{r plot-hab}
+```{r plot-hab, eval = FALSE}
 # total habitat
 ggplot(overall, aes(x = date, y = volume)) + 
   geom_bar(aes(fill = habitat), stat="identity", position = "stack") +  

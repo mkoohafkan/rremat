@@ -1,5 +1,5 @@
 ```
-load(purl("rremat/vignettes/habitat-analysis.Rmd", tempfile())  
+source(purl("rremat/vignettes/habitat-analysis.Rmd", tempfile()))
 ```
 
 # add some identifiers for scenarios
@@ -78,18 +78,50 @@ for(i in seq(nrow(ctdmeta))){
 thisclosure = closures[29,]
 
 thesegrids = filter(habgrids, 
-  date >=thisclosure$start & date <= thisclosure$end)
+  date >= thisclosure$start & date <= thisclosure$end)
 
-load(purl("rremat/vignettes/analyze-scenario.Rmd", tempfile())  
-  
+theseflow = filter(inflows, as.Date(datetime) >=thisclosure$start & 
+  as.Date(datetime) <= thisclosure$end, gauge == "russian river")
+theseflow["date"] = as.Date(theseflow$datetime)
+thesetransects = filter(ctdmeta, as.Date(start) >= thisclosure$start & as.Date(start) <= thisclosure$end, numcasts == 12)["start"]
+thesetransects["date"] = as.Date(thesetransects$start)
+theseflow = left_join(theseflow, thesetransects, "date")
+
+ggplot(theseflow, aes(x = datetime, y = flow)) + 
+  geom_line(size = 1, color = "darkblue") + scale_x_datetime("") +
+  geom_vline(aes(xintercept = as.numeric(start)), linetype = "dashed", size = 1) + 
+  ylab("inflow (m3/s)") 
+ggsave(paste0("C:/Users/Michael/Desktop/john_plots/", "closureflows", 
+  ".png"), width = 10, height = 8)
+
+closureplot = TRUE
+#load(purl("rremat/vignettes/analyze-scenario.Rmd", tempfile())  
 ```
 
 
 # analysis of Open conditions
 
 ```
-filter(ctdmeta, code == "O", isFall)
+#opengeom = geom_bar()
+thisopen = filter(ctdmeta, code == "O", isFall, mean.flow < 101, 
+  numcasts == 12)
+opendates = as.Date(thisopen$start)
 
+thesegrids = filter(habgrids, date %in% opendates)
+thesetides = filter(tides, as.Date(datetime) %in% opendates)  
+thesetides["date"] = as.Date(thesetides$datetime)
+thesetransects = thisopen["start"]
+thesetransects["date"] = as.Date(thesetransects$start)
+thesetides = left_join(thesetides, thesetransects, "date")
+ggplot(thesetides, aes(x = datetime, y = height, group = date)) + 
+  geom_line(size = 1, color = "darkblue") + scale_x_datetime("") +
+  geom_vline(aes(xintercept = as.numeric(start)), linetype = "dashed", size = 1) + 
+  facet_wrap(~date, scales = "free_x", ncol = 1) + ylab("Tide height (MLLW, m)")
+ggsave(paste0("C:/Users/Michael/Desktop/john_plots/", "opentides", 
+  ".png"), width = 10, height = 8)
+
+closureplot = TRUE
+#load(purl("rremat/vignettes/analyze-scenario.Rmd", tempfile())  
 ```
 
 
