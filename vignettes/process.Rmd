@@ -62,9 +62,12 @@ ctdmpath = system.file("extdata/ctd_meta", package = "rremat")
 ctdm = read.csv(paste0(ctdmpath, "/transectdatetime.csv"), 
   stringsAsFactors = FALSE, colClasses = "character")
 ctdmeta = data.frame(id = factor(ctdm$id), 
-  start = as.POSIXct(paste(ctdm$date, ctdm$start), tz = "US/Pacific"), # format = "%Y-%m-%d %H:%M"
+  start = as.POSIXct(paste(ctdm$date, ctdm$start), tz = "US/Pacific"),
   end = as.POSIXct(paste(ctdm$date, ctdm$end), tz = "US/Pacific"), 
   numcasts = as.integer(ctdm$numcasts), note = ctdm$note)
+# set time zones to UTC
+attr(ctdmeta$start, "tzone") = "UTC"
+attr(ctdmeta$end, "tzone") = "UTC"
 # cross-reference with closures
 ctdmeta["code"] = factor(unlist(sapply(as.Date(ctdmeta$start), function(x){ 
   this = as.character(closures$code[which(x >= closures$start & x <= closures$end)])

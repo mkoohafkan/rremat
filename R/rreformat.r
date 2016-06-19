@@ -148,10 +148,13 @@ merge_streamflow = function(sf, datetimecol = "datetime",
   flowcol = "discharge"){
   sites = sapply(names(sf), gauge_from_fpath)
   d = vector("list", length = length(sf))
-  for(i in seq(length(sf)))
+  for(i in seq(length(sf))){
     d[[i]] = data.frame(gauge = sites[[i]], 
       datetime = as.POSIXct(sf[[i]][[datetimecol]], tz = "US/Pacific"),
       flow = sf[[i]][[flowcol]])
+    # convert time zone to UTC
+    attr(d[[i]][[datetimecol]], "tzone") = "UTC"
+  }
   do.call(rbind.data.frame, d)
 }
 
