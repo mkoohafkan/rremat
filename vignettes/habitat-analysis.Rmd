@@ -158,6 +158,9 @@ habgrids["habitat"] = factor(apply(grids[c("ta", "oa", "sa")], 1, tot_hab),
     "sub-optimal (DO, S)", "sub-optimal (T, DO, S)", "stressful (T)", 
     "stressful sub-optimal (T, DO)", "stressful sub-optimal (T, S)", 
     "stressful sub-optimal (T, DO, S)", "unsuitable"))
+habgrids["ta.qual"] = factor(habgrids$ta.qual, levels = names(ta.windows))
+habgrids["sa.qual"] = factor(habgrids$sa.qual, levels = names(sa.windows))
+habgrids["oa.qual"] = factor(habgrids$oa.qual, levels = names(oa.windows))
 ```
 
 Habitat can be summarized in a variety of different ways: we can consider the 
