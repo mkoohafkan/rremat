@@ -20,15 +20,18 @@ the most habitat. Both standard and logarithmic color scales are shown.
 data(volumes)
 cellvol = prod(attr(volumes, "resolution")[c("xres", "yres", "zres")])
 volumes["volume"] = cellvol*volumes$count
-ggplot(volumes[volumes$count>0,], aes(x = dist, y = elev, fill = volume)) + 
-  geom_tile() + scale_fill_gradientn(colours = brewer.pal(n=6,name = "Set1")) +
+for(h in c("littoral", "limnetic", "epibenthic", "sublimnetic", "profundal"))
+  volumes[paste0("volume.", h)] = cellvol*volumes[[paste0("count.", h)]]
+  
+ggplot(volumes[volumes$count > 0,], aes(x = dist, y = elev, fill = volume)) + 
+  geom_raster() + scale_fill_gradientn(colours = brewer.pal(n=6,name = "Set1")) +
   scale_y_continuous("elevation above NAVD29 (m)", labels = comma) +
   xlab("Distance from river mouth (m)")
-
-ggsave(paste0("C:/Users/Michael/Desktop/john_plots/", "volumedistribution.png"),
+#ggsave(paste0("C:/Users/Michael/Desktop/john_plots/", "volumedistribution.png"),
   width = 10, height = 8)
-ggplot(volumes[volumes$count>0,], aes(x = dist, y = elev, fill = log10(volume))) + 
-  geom_tile() + scale_fill_gradientn(colours = brewer.pal(n=6,name = "Set1")) 
+ggplot(volumes[volumes$count > 0,], aes(x = dist, y = elev, 
+  fill = log10(volume))) + geom_raster() + 
+  scale_fill_gradientn(colours = brewer.pal(n=6,name = "Set1")) 
 ```
 
 Habitat quality for juvenile salmonids is defined according to the 
@@ -139,28 +142,13 @@ hab_cat = function(xs){ # xs = c(ta, oa, sa)
 }
 
 tot_hab = make_hsi(list(ta_hsd, oa_hsd, sa_hsd), hab_cat)
-
-depth_cat = function(z, maxz){
-  ifelse(z < 2 & maxz < 2, "littoral",
-  ifelse(z < 2 & maxz >= 2, "surface limnetic",
-  ifelse(z >= 2 & z < 5 & maxz >= 2, "subsurface limnetic",
-  ifelse(z >= 5 & maxz >= 2, "profundal", NA))))
-}
 ```
 
 ## Assessing habitat quality
 
 ```{r calc-habitat}
 data(grids)
-bedgrids = summarize(group_by(grids, date, id, dist), bedelev = min(elev))
-habgrids = inner_join(grids, bedgrids, by = c("date", "id", "dist"))
-habgrids["depth"] = habgrids$wse - habgrids$elev
-habgrids["max.depth"] = habgrids$wse - habgrids$bedelev
-habgrids["depth.zone"] = factor(ifelse(habgrids$depth < 2,
-  "surface (< 2m below surface)", "subsurface (> 2m below surface)"), 
-  levels = c("surface (< 2m below surface)", "subsurface (> 2m below surface)"))
-habgrids["depth.qual"] = factor(depth_cat(habgrids$depth, habgrids$max.depth),
-  levels = c("littoral", "surface limnetic", "subsurface limnetic", "profundal"))
+habgrids = grids
 habgrids["ta.qual"] = sapply(habgrids$ta, ta_hsd)
 habgrids["sa.qual"] = sapply(habgrids$sa, sa_hsd)
 habgrids["oa.qual"] = sapply(habgrids$oa, oa_hsd)

@@ -4,14 +4,21 @@ Version: 0.1.0.9000
 Authors@R: c(
     person("Michael", "Koohafkan", email = "koohafkan@ucdavis.edu", role = c("aut", "cre")),
     person("Matthew", "Robart", email = "mjrobart@ucdavis.edu", role = "aut"))
-Description: Provides functions for processing Matlab files containing Russian 
-    River Estuary data collected by the Largier Lab, and serves as a data 
+Description: Provides functions for processing Matlab files containing Russian
+    River Estuary data collected by the Largier Lab, and serves as a data
     repository.
-Depends: R (>= 3.2.0)
-Imports: R.matlab (>= 3.2)
-Suggests: reval, knitr, ggplot2, dplyr
+Depends:
+    R (>= 3.2.0)
+Imports:
+    R.matlab (>= 3.2)
+Suggests:
+    reval,
+    knitr,
+    ggplot2,
+    dplyr
 License: MIT + file LICENSE
 LazyData: true
 VignetteBuilder: knitr
 URL: https://github.com/mkoohafkan/rremat
-BugReports: https://github.com/mkoohafkan/rremat/issues 
+BugReports: https://github.com/mkoohafkan/rremat/issues
+RoxygenNote: 5.0.1

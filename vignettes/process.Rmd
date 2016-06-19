@@ -1,7 +1,7 @@
 # Processing Largier Lab Russian River Estuary Data
 
 ```{r include = FALSE}
-library(rremat)
+#library(rremat)
 library(reval)
 library(dplyr)
 ```
@@ -14,20 +14,28 @@ bathymetry raster with a vertical resolution as defined in
 `bathymetry/zgrid.csv`.
 
 ```{r process-lookup}
-volpath = system.file("extdata/bathymetry", package = "rremat")
-volumes = read.csv(paste0(volpath, "/volumelookup.csv"))
-volumeres = read.csv(paste0(volpath, "/volumeres.csv"))
-attr(volumes, "resolution") = volumeres
+# load the bathymetry tables
+volpath = system.file("extdata/bathymetry/bathytables", package = "rremat")
+bathytables = dir(volpath, pattern = "*.csv$")
+bathydat = read_bathymetry_tables(bathytables)
+# build the habitat table
+lookupvalues = setNames(expand.grid(wses, wses), c("elev", "wse"))
+lookupvalues = subset(lookupvalues, elev <= wse)
+volumes = evalmany(f, e = params$elev, w = params$wse, method = "set", 
+  default.args = list(d = dat), packages = "dplyr", clusters = 3)[1:9]
+# add bathymetry resolution information
+respath = system.file("extdata/bathymetry/bathymetryresolution.csv", 
+  package = "rremat")
+attr(volumes, "resolution") = read.csv(respath)
 ```
 
-The hypsometry is generated from the volume lookup table.
+The stage-volume curve is generated from the volume lookup table.
 
 ```{r}
-hypsometry = data.frame(summarize(group_by(volumes, elev), 
-  area = sum(count)*prod(attr(volumes, "resolution")[c("xres", "yres")])))
-hypsometry["volume"] = cumsum(hypsometry$area*attr(volumes, "resolution")$zres)
-attr(hypsometry, "units") = data.frame(area = "square meters", 
-  volume = "cubic meters")
+stage_volume = volumes  %>% 
+  gather(type, habcount, count, count.littoral, count.limnetic, 
+    count.epibenthic, count.sublimnetic, count.profundal) %>% 
+  group_by(type, wse) %>% summarize(count = sum(habcount))
 ```
 
 ## Processing closure data
@@ -99,12 +107,10 @@ using the volume lookup table and and CTD cast data, respectively. Extrapolated
 data occurring either outside of the estuary bathymetry (`volume == 0`) or 
 above the water-surface elevation (`elev > wse`) is removed.
 
-```{r strip-grid}
-grids = join_wse(join_volume(grids, volumes), ctd)
-bathymask = grids$volume > 0
-wsemask = grids$elev <= grids$wse
-grids = filter(grids[c("date", "id", "dist", "wse", "elev", "sa", "ta", "oa",
-  "volume")], volume > 0 & elev <= wse)
+```{r strip-grid}  
+grids = join_wse(grids, ctd) %>% mutate(wse = round(wse, 1)) %>% 
+  filter(elev <= wse) %>% join_volume(volumes) %>% 
+  filter(volume.total > 0)
 ```
 
 ## Processing water level pressure gauge data

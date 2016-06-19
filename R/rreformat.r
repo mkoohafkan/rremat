@@ -218,25 +218,46 @@ correct_dist = function(d, distcol = "dist"){
   d
 }
 
-#' Add Volume
+#' Build Habitat Table
 #'
-#' Add water volume contained in depth and distance zones.
+#' Compute habitat volume for a given depth and water surface elevation.
+#"
+#' @param d The data frame containing bathymetry data. Expects columns 
+#'   \code{bedelev}, \code{dist}, \code{count}, and \code{sum}.
+#' @param e The elevation (depth) at which to compute habitat.
+#' @param w The water surface elevation for which to compute habitat.
+#' @return A data frame containing the columns \code{elev}, \code{wse}, 
+#'   \code{count}, \code{count.littoral}, \code{count.limnetic}, 
+#'   \code{count.epibenthic}, \code{count.sublimnetic}, and 
+#'   \code{count.profundal}.
 #'
-#' @param d Dataframe containing physical data, e.g. \code{data(grids)}.
-#' @param v Dataframe containing volume lookup information, e.g. 
-#'   \code{data(volumes)}. Assumes first 3 columns are x, y, and z resolution 
-#'   respectively.
-#' @param zcol Column name containing vertical markers, e.g. \code{elev}.
-#' @param xcol Column name containing longitudinal markers, e.g. \code{dist}.
-#' @return The dataframe \code{d} with the additional column \code{volume}.
-#'
-#' @importFrom dplyr inner_join
+#' @import dplyr
 #' @export
-add_volume = function(d, v, r, zcol = "elev", xcol = "dist"){
-  retnames = names(d)
-  cellvol = prod(r[1:3])
-  f = inner_join(d, v, by = c(xcol, zcol))
-  f['count'] = as.integer(f$count)
-  f['volume'] = f$count*cellvol
-  f[c(retnames, 'volume')]
+build_habitat_table = function(d, e, w){  
+  d %>% group_by(dist, bedelev) %>% 
+      mutate(
+        elev = e,
+        wse = w,
+        is.available = (wse > bedelev) & (elev > bedelev) & (wse > elev),
+        is.littoral = is.available & 
+          ((wse - elev) <= 1) & ((wse - bedelev) <= 1),
+        is.limnetic = is.available & 
+          ((wse - elev) <= 1) & ((wse - bedelev) > 1),
+        is.epibenthic = is.available & 
+          ((wse - elev) > 1) & ((wse - elev) <= 5) & ((wse - bedelev) <= 5),
+        is.sublimnetic = is.available & 
+          ((wse - elev) > 1) & ((wse - elev) <= 5) & ((wse - bedelev) > 5),
+        is.profundal = is.available & ((wse - elev) > 5)
+      ) %>% 
+      group_by(dist) %>% 
+      summarize(
+        elev = unique(elev),
+        wse = unique(wse),
+        count = sum(sum*is.available),
+        count.littoral = sum(sum*is.littoral),
+        count.limnetic = sum(sum*is.limnetic),
+        count.epibenthic = sum(sum*is.epibenthic),           
+        count.sublimnetic = sum(sum*is.sublimnetic),
+        count.profundal = sum(sum*is.profundal)    
+      )
 }

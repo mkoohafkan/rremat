@@ -376,3 +376,20 @@ download_tides = function(f = tempfile(), begin_date, end_date,
   download.file(noaaurl, f, ...)
   return(f)
 }
+
+#' Read Bathymetry Tables
+#'
+#' Read and combine the bathymetry tables.
+#'
+#' @param files A list of files containing bathymetry data. Each file is 
+#'   expected to have columns \code{OID}, \code{dist}, \code{count}, 
+#'   \code{area}, \code{sum}, and \code{bedelev}.
+#' @return A data frame with columns, \code{bedelev}, \code{dist}, \code{area}, 
+#'   \code{count}, and \code{sum}.
+#'
+#' @export
+read_bathymetry_tables = function(files){
+  d = do.call(rbind.data.frame, lapply(files, read.csv))
+  names(d) = c("OID", "dist", "count", "area", "sum", "bedelev")
+  d[c("bedelev", "dist", "area", "count", "sum")]
+}

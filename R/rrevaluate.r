@@ -131,8 +131,11 @@ make_hsi = function(hsc = list(), ag.fun = mean){
 #'
 #' @importFrom dplyr inner_join
 #' @export
-join_volume = function(d, volumes, cellvol, joincols = c("elev", "dist"), 
-  countcol = "count", volcol = "volume"){
+join_volume = function(d, volumes, cellvol, joincols = c("elev", "dist", "wse"), 
+  countcols = c("count", "count.littoral", "count.limnetic", 
+    "count.sublimnetic", "count.epibenthic", "count.profundal"), 
+  volcols = c("volume.total", "volume.littoral", "volume.limnetic", 
+    "volume.sublimnetic", "volume.epibenthic", "volume.profundal")){
   if(missing(volumes))
     data(volumes, envir = environment())
   if(missing(cellvol))
@@ -140,9 +143,10 @@ join_volume = function(d, volumes, cellvol, joincols = c("elev", "dist"),
   ind = d
   d[, joincols] = as.character(unlist(d[, joincols]))
   volumes[, joincols] = as.character(unlist(volumes[, joincols]))
-  f = inner_join(d, volumes, by = joincols)
+  f = left_join(d, volumes, by = joincols)
   f[, joincols] = as.numeric(unlist(f[, joincols]))
-  ind[volcol] = f[[countcol]]*cellvol
+  for(i in seq_along(volcols))
+    ind[volcols[i]] = f[[countcols[i]]]*cellvol
   ind
 }
 
@@ -181,7 +185,7 @@ join_wse = function(d, ctd, joincols = c("date", "id"),
 #'
 #' Group and summarize a dataframe by specific "strata" or groupings.
 #'
-#' @param d Th dataframe to be summarized.
+#' @param d The dataframe to be summarized.
 #' @param stratcols Vector or list of column names to group by.
 #' @param summexpr Named vector or list of expressions to summarize the data.
 #' @return A dataframe containing grouped and summarized data.
