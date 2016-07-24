@@ -136,7 +136,7 @@ but provide critical supplemental data.
 
 ### Tide data
 
-This code reproduces the dataframe `ptreyes` generated from files in 
+This code reproduces the dataframe `tides` generated from files in 
 `extdata/tides`. The files contain data for the 
 [NOAA Point Reyes Station](http://tidesandcurrents.noaa.gov/stationhome.html?id=9415020) 
 downloaded from the NOAA web API. Those files were created using the function 
