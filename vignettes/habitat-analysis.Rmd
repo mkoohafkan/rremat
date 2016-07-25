@@ -189,7 +189,8 @@ habgrids["code"] = factor(habgrids$code)
 # add ctd meta data
 data(ctdmeta)
 gridid = as.character(interaction(habgrids$date, habgrids$id))
-metaid = as.character(interaction(as.Date(ctdmeta$start), ctdmeta$id))
+metaid = as.character(interaction(strftime(ctdmeta$start, format = "%Y-%m-%d", 
+  tz = "US/Pacific"), ctdmeta$id))
 for(i in seq(nrow(ctdmeta))){
   habgrids[gridid == metaid[i], "numcasts"] = ctdmeta[i, "numcasts"]  
 }

@@ -65,9 +65,6 @@ ctdmeta = data.frame(id = factor(ctdm$id),
   start = as.POSIXct(paste(ctdm$date, ctdm$start), tz = "US/Pacific"),
   end = as.POSIXct(paste(ctdm$date, ctdm$end), tz = "US/Pacific"), 
   numcasts = as.integer(ctdm$numcasts), note = ctdm$note)
-# set time zones to UTC
-attr(ctdmeta$start, "tzone") = "UTC"
-attr(ctdmeta$end, "tzone") = "UTC"
 # cross-reference with closures
 ctdmeta["code"] = factor(unlist(sapply(as.Date(ctdmeta$start), function(x){ 
   this = as.character(closures$code[which(x >= closures$start & x <= closures$end)])
@@ -76,6 +73,9 @@ ctdmeta["code"] = factor(unlist(sapply(as.Date(ctdmeta$start), function(x){
   else
     "O"  
   })))
+# set time zones to UTC
+attr(ctdmeta$start, "tzone") = "UTC"
+attr(ctdmeta$end, "tzone") = "UTC"
 ```
 
 ## Processing CTD transect data
@@ -96,21 +96,18 @@ This code reproduces the dataframe `grids` from the matlab files
 in `extdata/ctd_interp`. These grids may contain extrapolated data including 
 regions outside of the estuary bathymetry and above the observed water-surface 
 elevation. Note that the `dist` values have already been corrected as per the 
-function `correct_dist` (see `matlab-src/interpctd.m`).
+function `correct_dist` (see `matlab-src/interpctd.m`). Volume information and 
+water-surface elevation is added to the gridded data 
+using the volume lookup table and and CTD cast data, respectively. Extrapolated
+data occurring either outside of the estuary bathymetry (`volume == 0`) or 
+above the water-surface elevation (`elev > wse`) is removed.
+
 
 ```{r process-grids}
 gridpath = system.file("extdata/ctd_interp", package = "rremat")
 grid.list = evalmany(function(fpath) read_rrectdgrid(fpath, quiet = TRUE)[[1]],
   fpath = paste0(gridpath, "/", dir(gridpath)), collate = FALSE)
 grids = merge_rrectd(grid.list)
-```
-
-Volume information and water-surface elevation is added to the gridded data 
-using the volume lookup table and and CTD cast data, respectively. Extrapolated
-data occurring either outside of the estuary bathymetry (`volume == 0`) or 
-above the water-surface elevation (`elev > wse`) is removed.
-
-```{r strip-grid}  
 grids = join_wse(grids, ctd) %>% mutate(wse = round(wse, 1)) %>% 
   filter(elev <= wse) %>% join_volume(volumes) %>% 
   filter(volume.total > 0)
