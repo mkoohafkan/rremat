@@ -27,7 +27,7 @@ def computeplane(elev):
   processtable(total, zones, elev, table_folder, total_name)
 
 def main():
-  topofac = range(-158, 27, 1)
+  topofac = range(-158, 31, 1)
   for i in topofac:
     computeplane(i)
 
