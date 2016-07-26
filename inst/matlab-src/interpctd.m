@@ -9,7 +9,7 @@ function Vs = interpctd(ctd, xn, zn, vns, xres, zres, interptype, extraptype)
   % extraptype = 'linear'
   
   % define interpolation grid
-  surfacebound = 2.6 ; % based on max observed WSE
+  surfacebound = 3.0 ; % based on max observed WSE
   zbound = -15.8 ; % based on minimum z in bathymetry raster
 
   % correct ctd distances
