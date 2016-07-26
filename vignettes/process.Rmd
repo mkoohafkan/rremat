@@ -16,13 +16,16 @@ bathymetry raster with a vertical resolution as defined in
 ```{r process-lookup}
 # load the bathymetry tables
 volpath = system.file("extdata/bathymetry/bathytables", package = "rremat")
-bathytables = dir(volpath, pattern = "*.csv$")
+bathytables = dir(volpath, pattern = "*.csv$", full.names = TRUE)
 bathydat = read_bathymetry_tables(bathytables)
 # build the habitat table
-lookupvalues = setNames(expand.grid(wses, wses), c("elev", "wse"))
-lookupvalues = subset(lookupvalues, elev <= wse)
-volumes = evalmany(f, e = params$elev, w = params$wse, method = "set", 
-  default.args = list(d = dat), packages = "dplyr", clusters = 3)[1:9]
+wses = seq(2.7, 3.0, by = 0.1)
+lookupvalues = setNames(expand.grid(unique(bathydat$bedelev), 
+  unique(bathydat$bedelev)), c("elev", "wse"))
+lookupvalues = filter(lookupvalues, elev <= wse)
+volumes = evalmany(build_habitat_table, e = lookupvalues$elev, 
+  w = lookupvalues$wse, method = "set", default.args = list(d = bathydat), 
+  packages = "dplyr", clusters = 3)[1:9]
 # add bathymetry resolution information
 respath = system.file("extdata/bathymetry/bathymetryresolution.csv", 
   package = "rremat")
