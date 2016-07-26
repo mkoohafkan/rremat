@@ -176,7 +176,7 @@ join_wse = function(d, ctd, joincols = c("date", "id"),
   ind = d 
   ctd["wsein"] = ctd[[wsein]]
   wl = summarize(group_by_(ctd, .dots = joincols), wse = max(wsein))
-  wse = inner_join(d, wl, by = joincols)
+  wse = left_join(d, wl, by = joincols)
   ind[wseout] = wse$wse
   ind
 }

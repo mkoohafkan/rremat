@@ -341,7 +341,7 @@ read_rrectdgrid = function(fpath, quiet = FALSE){
   return(ret)  
 }
 
-#' Download NOAA data
+#' Download NOAA tide data
 #' 
 #' Download data from NOAA Tides & Currents web API.
 #'
@@ -358,7 +358,7 @@ read_rrectdgrid = function(fpath, quiet = FALSE){
 #' @param units units used for data product. Default is metric units.
 #' @param time_zone Time zone used in data product. Default is GMT.
 #' @param ... Other arguments to pass to \code{download.file()}.
-#' @return The Destination file path.
+#' @return The destination file path.
 #' 
 #' @details The NOAA Tides & Currents web API limits data requests to 365 days
 #'   or less.
@@ -375,6 +375,34 @@ download_tides = function(f = tempfile(), begin_date, end_date,
     begin_date, "&end_date=", end_date, "&datum=", datum, "&units=", units,
     "&time_zone=", time_zone,"&format=csv")
   download.file(noaaurl, f, ...)
+  return(f)
+}
+
+#' Download USGS streamflow data
+#' 
+#' Download data from USGS web API.
+#'
+#' @param f Destination file.
+#' @param begin_date Character start date of date request in format
+#'   "YYYY-MM-DD".
+#' @param end_date Character end date of date request in format
+#'   "YYYY-MM-DD".
+#' @param product Data product, default is streamflow.
+#' @param station Data station to download data from. Default is Guerneville.
+#'   Austin Creek station is second element of default value.   
+#' @param ... Other arguments to pass to \code{download.file()}.
+#' @return The destination file path.
+#' 
+#' @details The NOAA Tides & Currents web API limits data requests to 365 days
+#'   or less.
+#'
+#' @export 
+download_streamflow = function(f = tempfile(), begin_date, end_date, 
+  product = "00060", station = c("11467000","11467200"), ...){
+  usgsurl = paste0("http://nwis.waterdata.usgs.gov/usa/nwis/uv/?cb_", product, 
+    "=on&format=rdb&site_no=", station[1], "&period=&begin_date=", begin_date, 
+    "&end_date=", end_date)
+  download.file(usgsurl, f, ...)
   return(f)
 }
 

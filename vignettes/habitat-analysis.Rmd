@@ -161,16 +161,6 @@ habgrids["habitat"] = factor(apply(grids[c("ta", "oa", "sa")], 1, tot_hab),
 habgrids["ta.qual"] = factor(habgrids$ta.qual, levels = names(ta.windows))
 habgrids["sa.qual"] = factor(habgrids$sa.qual, levels = names(sa.windows))
 habgrids["oa.qual"] = factor(habgrids$oa.qual, levels = names(oa.windows))
-```
-
-Habitat can be summarized in a variety of different ways: we can consider the 
-estuary as whole, or divide it into segments based on distance from the river 
-mouth (lower reach, middle reach, upper reach) or vertical strata (e.g. by 
-depth categories). We can also group transects by estuary mouth condition (i.e. 
-open, closed, perched), by season, or by inflow (e.g. high or low inflow).
-
-
-```{r add-meta}
 # add closure meta data
 data(closures)
 habgrids["code"] = "O"
@@ -194,12 +184,18 @@ metaid = as.character(interaction(strftime(ctdmeta$start, format = "%Y-%m-%d",
 for(i in seq(nrow(ctdmeta))){
   habgrids[gridid == metaid[i], "numcasts"] = ctdmeta[i, "numcasts"]  
 }
-
-# strip out incomplete grids
-habgrids = filter(habgrids, numcasts == 12)
 ```
 
+Habitat can be summarized in a variety of different ways: we can consider the 
+estuary as whole, or divide it into segments based on distance from the river 
+mouth (lower reach, middle reach, upper reach) or vertical strata (e.g. by 
+depth categories). We can also group transects by estuary mouth condition (i.e. 
+open, closed, perched), by season, or by inflow (e.g. high or low inflow).
+
+
 ```{r summarize-habitat, eval = FALSE}
+# strip out incomplete grids
+habgrids = filter(habgrids, numcasts == 12)
 # total habitat
 overall = summarize_by_strata(habgrids, 
   stratcols = c("date", "id", "habitat", "code", "days.since.closure"), 
