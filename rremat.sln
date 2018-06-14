@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2026
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{DA7A21FA-8162-4350-AD77-A8D1B671F3ED}") = "rremat", "rremat.rxproj", "{9F690549-D8E1-4E1B-8285-A0FE12853E01}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9F690549-D8E1-4E1B-8285-A0FE12853E01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F690549-D8E1-4E1B-8285-A0FE12853E01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F690549-D8E1-4E1B-8285-A0FE12853E01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F690549-D8E1-4E1B-8285-A0FE12853E01}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FB914F8E-ED00-45A8-8B7B-25207716683C}
+	EndGlobalSection
+EndGlobal
