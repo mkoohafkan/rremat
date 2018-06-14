@@ -1,0 +1,32 @@
+---
+title: "Getting data from web APIs"
+output: html_document
+---
+
+# Historical NOAA tide data
+
+```{r}
+library(rremat)
+
+years = seq(1975, 2017)
+starts = sprintf("%d0101", years)
+ends = sprintf("%d1231", years)
+
+tempfiles = file.path(tempdir(),
+  sprintf("CO-OPS__9415020__hr_%d.csv", years))
+
+Map(download_tides, tempfiles, starts, ends)
+```
+
+# Historical NOAA wave height data
+
+```{r}
+wavefiles = sprintf("http://www.ndbc.noaa.gov/view_text_file.php?filename=46013h%d.txt.gz&dir=data/historical/stdmet/",
+  seq(1981, 2016))
+writefiles = sprintf("C:/Users/michael/Box Sync/UC Davis/ESTUARY FUTURES/NOAA/46013h%d.txt",
+  seq(1981, 2016))
+
+Map(download.file, tidefiles, writefiles)
+
+# Much manual fixing and formatting needed...
+```

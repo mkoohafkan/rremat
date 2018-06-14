@@ -1,8 +1,7 @@
 # Processing Largier Lab Russian River Estuary Data
 
 ```{r include = FALSE}
-#library(rremat)
-library(reval)
+library(rremat)
 library(dplyr)
 ```
 
@@ -88,8 +87,8 @@ This code reproduces the dataframe `ctd` from the Matlab files in
 
 ```{r process-ctd}
 ctdpath = system.file("extdata/ctd", package = "rremat")
-ctd.list = evalmany(function(fpath) read_rrectd(fpath, quiet = TRUE)[[1]], 
-  fpath = paste0(ctdpath, "/", dir(ctdpath)), collate = FALSE)
+ctd.list = Map(function(fpath) read_rrectd(fpath, quiet = TRUE)[[1]], 
+  fpath = paste0(ctdpath, "/", dir(ctdpath)))
 ctd = correct_dist(depth_from_elev(merge_rrectd(ctd.list)))
 ```
 
@@ -108,8 +107,8 @@ above the water-surface elevation (`elev > wse`) is removed.
 
 ```{r process-grids}
 gridpath = system.file("extdata/ctd_interp", package = "rremat")
-grid.list = evalmany(function(fpath) read_rrectdgrid(fpath, quiet = TRUE)[[1]],
-  fpath = paste0(gridpath, "/", dir(gridpath)), collate = FALSE)
+grid.list = Map(function(fpath) read_rrectdgrid(fpath, quiet = TRUE)[[1]],
+  fpath = paste0(gridpath, "/", dir(gridpath)))
 grids = merge_rrectd(grid.list)
 grids = join_wse(grids, ctd) %>% mutate(wse = round(wse, 1)) %>% 
   filter(elev <= wse) %>% join_volume(volumes) %>% 
@@ -123,8 +122,8 @@ This code reproduces the dataframe `wll` from the Matlab files in
 
 ```{r process-wll}
 wllpath = system.file("extdata/wll", package = "rremat")
-wll.list = evalmany(function(fpath) read_rrewll(fpath, quiet = TRUE)[[1]], 
-  fpath = paste0(wllpath, "/", dir(wllpath)), collate = FALSE) 
+wll.list = Map(function(fpath) read_rrewll(fpath, quiet = TRUE)[[1]], 
+  fpath = paste0(wllpath, "/", dir(wllpath))) 
 wll = merge_rrewll(wll.list)
 wll = wll[!is.nan(wll$depth),]
 ```
@@ -144,8 +143,8 @@ downloaded from the NOAA web API. Those files were created using the function
 
 ```{r process-tides}
 tidespath = system.file("extdata/tides", package = "rremat")
-tides.list = evalmany(read.csv, file = paste0(tidespath, "/", dir(tidespath)),
-  default.args = list(stringsAsFactors = FALSE), collate = FALSE)
+tides.list = Map(read.csv, file = paste0(tidespath, "/", dir(tidespath)),
+  stringsAsFactors = FALSE)
 tides = merge_tides(tides.list)
 ```
 
@@ -161,7 +160,7 @@ This code reproduces the dataframe `inflows` from the files in
 
 ```{r process-streamflow}
 sfpath = system.file("extdata/streamflow", package = "rremat")
-sf.list = evalmany(read.csv, file = paste0(sfpath, "/", dir(sfpath)), 
-  default.args = list(stringsAsFactors = FALSE), collate = FALSE)
+sf.list = Map(read.csv, file = paste0(sfpath, "/", dir(sfpath)), 
+  stringsAsFactors = FALSE)
 inflows = merge_streamflow(sf.list)
 ```
