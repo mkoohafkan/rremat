@@ -1,3 +1,14 @@
 ^\.travis\.yml$
+LICENSE
+^MIT.txt$
 README.md
-MIT.txt
+.gitignore
+.rhistory
+.gitattribute
+.vs
+.git
+.rproj
+.rxproj
+.sln
+^.*\.Rproj$
+^\.Rproj\.user$
