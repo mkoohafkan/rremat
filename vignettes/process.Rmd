@@ -148,14 +148,29 @@ tides.list = Map(read.csv, file = paste0(tidespath, "/", dir(tidespath)),
 tides = merge_tides(tides.list)
 ```
 
+### Wave data
+
+This code reproduces the dataframe `waves` generated from files in
+`extdata/waves`. The files contain data for the NOAA buoy at
+[Bodega Bay](http://www.ndbc.noaa.gov/station_history.php?station=46013)
+(Station 46013/LLNR 390). Those files were scraped from the NDBC
+historical data web page.
+
+```{r process-waves}
+wavespath = system.file("ext/waves", package = "rremat")
+waves.list = Map(read.csv, file = paste0(wavespath, "/", dir(wavespath)),
+  stringsAsFactors = FALSE, encoding = "UTF-8", comment.char = "#")
+waves = merge_waves(waves.list)
+```
+
 ### Streamflow data
 
 This code reproduces the dataframe `inflows` from the files in 
 `extdata/streamflow`. The files contain streamflow data for from USGS gauges near 
 [Guerneville, CA](http://waterdata.usgs.gov/nwis/inventory/?site_no=11467000&agency_cd=USGS)
-(Russian River) and near 
+(Russian River/Station 11467000) and near 
 [Cazadero, CA](http://waterdata.usgs.gov/nwis/inventory/?site_no=11467200&agency_cd=USGS) 
-(Austin Creek). Those files were downloaded from the USGS 
+(Austin Creek/Station 11467200). Those files were downloaded from the USGS 
 [National Water Information System]([http://waterdata.usgs.gov/nwis/](http://waterdata.usgs.gov/nwis/)).
 
 ```{r process-streamflow}

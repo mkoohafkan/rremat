@@ -10,15 +10,14 @@ Description: Provides functions for processing Matlab files containing Russian
 Depends:
     R (>= 3.2.0)
 Imports:
-    R.matlab (>= 3.2)
+    R.matlab (>= 3.2),
+	dplyr (>= 0.7)
 Suggests:
-    reval,
     knitr,
-    ggplot2,
-    dplyr
+    ggplot2
 License: MIT + file LICENSE
 LazyData: true
 VignetteBuilder: knitr
 URL: https://github.com/mkoohafkan/rremat
 BugReports: https://github.com/mkoohafkan/rremat/issues
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

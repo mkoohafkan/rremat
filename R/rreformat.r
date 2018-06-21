@@ -47,6 +47,12 @@ gauge_from_fpath = function(x){
     "unknown"
 }
 
+# helper function to add leading zeros to year/month/day/hour entries
+leading_zero = function(x) {
+  x = paste(x)
+  ifelse(nchar(x) < 2, paste0("0", x), x)
+}
+
 #' Combine Water Level Records
 #'
 #' Combine water level data files into a dataframe.
@@ -133,6 +139,62 @@ merge_tides = function(tides, datetimecol = "Date.Time",
       sigma = tides[[i]][[sigmacol]])
   do.call(rbind.data.frame, d)
 }
+
+#' Combine Wave Records
+#'
+#' Combine data files produced by \code{download_waves}.
+#'
+#' @param waves A list of dataframes of wave data.
+#' @return A single dataframe of wave data.
+#'
+#' @details The wave data also contains meteorological data
+#'   such as pressure, air temperature, sea surface temperature,
+#'   etc. The wave data records can be very spotty.
+#'
+#' @seealso download_waves
+#'
+#' @export
+merge_waves = function(waves) {
+  d = vector("list", length = length(waves))
+  for (i in seq(length(waves))) {
+    if ("X.U.FEFF.YY" %in% names(waves[[i]]))
+      waves[[i]]["YYYY"] = waves[[i]][["X.U.FEFF.YY"]]
+    if ("X.U.FEFF.YYYY" %in% names(waves[[i]]))
+      waves[[i]]["YYYY"] = waves[[i]][["X.U.FEFF.YYYY"]]
+    if ("WD" %in% names(waves[[i]]))
+      waves[[i]]["WDIR"] = waves[[i]][["WD"]]
+    if ("BAR" %in% names(waves[[i]]))
+      waves[[i]]["PRES"] = waves[[i]][["BAR"]]
+    waves[[i]]["YYYY"] = with(waves[[i]],
+      ifelse(YYYY < 1900, YYYY + 1900L, YYYY))
+    waves[[i]]["MM"] = leading_zero(waves[[i]][["MM"]])
+    waves[[i]]["DD"] = leading_zero(waves[[i]][["DD"]])
+    waves[[i]]["hh"] = leading_zero(waves[[i]][["hh"]])
+    for (n in c("WDIR", "PRES", "TIDE"))
+      if (!(n %in% names(waves[[i]])))
+        waves[[i]][n] = NA
+    d[[i]] = with(waves[[i]], data.frame(
+      Datetime = as.POSIXct(paste(YYYY, MM, DD, hh, "00", sep = "-"),
+        format = "%Y-%m-%d-%H-%M", tz = "UTC"),
+      wind.speed = ifelse(WSPD > 90, NA, WSPD),
+      wind.dir = ifelse(WDIR > 990, NA, WDIR),
+      gust.speed = ifelse(GST > 90, NA, GST),
+      wave.height = ifelse(WVHT > 90, NA, WVHT),
+      wave.period.dom = ifelse(DPD > 90, NA, DPD),
+      wave.period.avg = ifelse(APD > 90, NA, APD),
+      wave.dir = ifelse(MWD > 990, NA, MWD),
+      pressure = ifelse(PRES > 9990, NA, PRES),
+      air.temp = ifelse(ATMP > 990, NA, ATMP),
+      water.temp = ifelse(WTMP > 990, NA, WTMP),
+      dewpoint = ifelse(DEWP > 990, NA, DEWP),
+      visibility = ifelse(VIS > 90, NA, VIS),
+      tide.height = ifelse(TIDE > 90, NA, tides)
+     ))
+  }
+  do.call(rbind.data.frame, d)
+}
+
+
 
 #' Combine Streamflow Records
 #'
@@ -236,7 +298,7 @@ correct_dist = function(d, distcol = "dist"){
 #'
 #' @import dplyr
 #' @export
-build_habitat_table = function(d, e, w){  
+build_habitat_table = function(d, e, w) {
   d %>% group_by(dist, bedelev) %>% 
       mutate(
         elev = e,

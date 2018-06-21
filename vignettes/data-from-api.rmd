@@ -26,7 +26,7 @@ wavefiles = sprintf("http://www.ndbc.noaa.gov/view_text_file.php?filename=46013h
 writefiles = sprintf("C:/Users/michael/Box Sync/UC Davis/ESTUARY FUTURES/NOAA/46013h%d.txt",
   seq(1981, 2016))
 
-Map(download.file, tidefiles, writefiles)
+Map(download.file, wavefiles, writefiles)
 
 # Much manual fixing and formatting needed...
 ```
