@@ -21,4 +21,3 @@ using \code{rremat}. Structured as:
 read_rrewll merge_rrewll
 }
 \keyword{datasets}
-

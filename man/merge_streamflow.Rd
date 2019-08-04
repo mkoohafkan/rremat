@@ -19,4 +19,3 @@ A single dataframe of streamflow data.
 \description{
 Combine streamflow records obtained from the USGS.
 }
-

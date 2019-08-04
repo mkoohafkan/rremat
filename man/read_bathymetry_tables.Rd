@@ -18,4 +18,3 @@ A data frame with columns, \code{bedelev}, \code{dist}, \code{area},
 \description{
 Read and combine the bathymetry tables.
 }
-

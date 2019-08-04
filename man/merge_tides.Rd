@@ -25,4 +25,3 @@ Combine data files produced by \code{download_tides}.
 \seealso{
 download_tides
 }
-

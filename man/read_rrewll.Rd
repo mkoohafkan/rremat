@@ -22,4 +22,3 @@ Read water level data from Largier Lab Matlab file
 Largier Lab Matlab data is typically formatted as a Matlab  
   structure with multiple equal-length data columns and an optional note.
 }
-

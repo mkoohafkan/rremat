@@ -5,9 +5,10 @@
 \title{Join volume information}
 \usage{
 join_volume(d, volumes, cellvol, joincols = c("elev", "dist", "wse"),
-  countcols = c("count.total", "count.littoral", "count.surface",
-  "count.subsurface", "count.profundal"), volcols = c("volume.total",
-  "volume.littoral", "volume.surface", "volume.subsurface", "volume.profundal"))
+  countcols = c("count", "count.littoral", "count.limnetic",
+  "count.sublimnetic", "count.epibenthic", "count.profundal"),
+  volcols = c("volume.total", "volume.littoral", "volume.limnetic",
+  "volume.sublimnetic", "volume.epibenthic", "volume.profundal"))
 }
 \arguments{
 \item{d}{Dataframe containing data to have volume information attached to.}
@@ -31,4 +32,3 @@ The dataframe \code{d} with the additional column \code{volcol}.
 \description{
 Attach water volume information from estuary bathymetry to gridded data.
 }
-

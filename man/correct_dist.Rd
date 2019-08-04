@@ -41,4 +41,3 @@ Distances are corrected and converted from km to m by comparing GPS
 \seealso{
 read_rrectd read_rrectdgrid merge_rrectd
 }
-

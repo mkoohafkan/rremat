@@ -2,7 +2,7 @@
 % Please edit documentation in R/rreadwrite.r
 \name{download_tides}
 \alias{download_tides}
-\title{Download NOAA data}
+\title{Download NOAA tide data}
 \usage{
 download_tides(f = tempfile(), begin_date, end_date,
   product = "hourly_height", station = "9415020", datum = "MLLW",
@@ -32,7 +32,7 @@ is mean lower low water (MLLW).}
 \item{...}{Other arguments to pass to \code{download.file()}.}
 }
 \value{
-The Destination file path.
+The destination file path.
 }
 \description{
 Download data from NOAA Tides & Currents web API.
@@ -41,4 +41,3 @@ Download data from NOAA Tides & Currents web API.
 The NOAA Tides & Currents web API limits data requests to 365 days
   or less.
 }
-

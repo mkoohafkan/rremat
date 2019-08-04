@@ -34,4 +34,3 @@ make_hsd(windows, scores)
 make_hsd(windows, names(windows))
 
 }
-

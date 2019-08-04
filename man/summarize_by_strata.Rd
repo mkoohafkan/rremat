@@ -23,4 +23,3 @@ Group and summarize a dataframe by specific "strata" or groupings.
 This function is basically a wrapper for the \code{summarize} and
   \code{group_by} functions provided by \code{dplyr}.
 }
-

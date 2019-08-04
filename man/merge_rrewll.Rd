@@ -27,4 +27,3 @@ Combine water level data files into a dataframe.
 \seealso{
 read_rrewll
 }
-

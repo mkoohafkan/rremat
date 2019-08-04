@@ -24,8 +24,9 @@ Volume lookup table constructed from RRE bathymetry. Structured as:
 \details{
 The volume lookup table was generated from the RRE bathymetry DEM 
   and zone delineations based on a manual trace of the river thaleweg. The 
-  volume cells are defined as having a length of 1 meter, width of 1 meter, 
-  and height of 0.1 meters (cell volume of 0.1 cubic meters). Zones are 
+  volume cells are defined as having a length of 0.3048 meters (1 foot),
+  width of 0.3048 meters, and height of 0.1 meters (cell volume of 
+  0.009290304 cubic meters). Zones are 
   delineated in 100-meter increments along the thalweg, and each zone is 
   divided in the vertical into 0.1-meter increments from a minimum elevation 
   of -15.8 meters to a maximum elevation of 2.6 meters. The lookup table 
@@ -35,4 +36,3 @@ The volume lookup table was generated from the RRE bathymetry DEM
   \code{z - 0.1}.
 }
 \keyword{datasets}
-

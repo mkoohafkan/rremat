@@ -28,4 +28,3 @@ The dataframe \code{d} with the additional column \code{wseout}.
 Attach maximum water-surface elevation recorded in CTD transects to gridded 
   data.
 }
-

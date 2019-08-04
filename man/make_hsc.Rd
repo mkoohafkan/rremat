@@ -54,4 +54,3 @@ make_hsc(c(5, 10, 15), c(0, 0.7, 1), scoreright = 1, spline.expand = 1)
 make_hsc(c(5, 10, 15), c(0, 0.7, 1), scoreright = 1, spline.expand = 100)
 
 }
-

@@ -23,4 +23,3 @@ A data frame containing the columns \code{elev}, \code{wse},
 \description{
 Compute habitat volume for a given depth and water surface elevation.
 }
-

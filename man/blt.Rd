@@ -38,4 +38,3 @@ Chu, Peter C., and Chenwu Fan. "Maximum angle method for
 \seealso{
 \code{\link{mld}}
 }
-

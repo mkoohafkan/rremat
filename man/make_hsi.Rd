@@ -28,4 +28,3 @@ make_hsi(list(f1, f2), ag.fun = mean)
 make_hsi(list(f1, f2), ag.fun = min)
 
 }
-

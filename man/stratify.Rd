@@ -23,4 +23,3 @@ This function is basically a wrapper for \code{cut()}, but requires
   Every element of \code{x} is therefore guaranteed to be included in one
   interval.
 }
-

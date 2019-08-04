@@ -32,4 +32,3 @@ Largier Lab Matlab data is typically formatted as a Matlab
   'Surfdist' and 'surfelev' are used to populate an expanded 'surfelev' 
   column corresponding to data column 'elev'.
 }
-

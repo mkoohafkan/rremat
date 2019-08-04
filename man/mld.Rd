@@ -55,4 +55,3 @@ Chu, Peter C., and Chenwu Fan. "Maximum angle method for
   determining mixed layer depth from seaglider data." Journal of 
   oceanography 67.2 (2011): 219-230.
 }
-

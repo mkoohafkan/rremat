@@ -22,4 +22,3 @@ Read interpolated grid of CTD data from Largier Lab Matlab file.
 Largier Lab Matlab data is typically formatted as a Matlab  
   structure with multiple equal-size matrices.
 }
-

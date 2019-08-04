@@ -22,4 +22,3 @@ Transect meta data was collected from the Russian River Estuary
   submitted to the Sonoma County Water Agency.
 }
 \keyword{datasets}
-
