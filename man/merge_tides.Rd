@@ -4,8 +4,8 @@
 \alias{merge_tides}
 \title{Combine Tide Records}
 \usage{
-merge_tides(tides, datetimecol = "Date.Time", heightcol = "Water.Level",
-  sigmacol = "Sigma")
+merge_tides(tides, datetimecol = "Date.Time",
+  heightcol = "Water.Level", sigmacol = "Sigma")
 }
 \arguments{
 \item{tides}{A list of dataframes of tide data.}

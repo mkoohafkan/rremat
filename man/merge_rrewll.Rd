@@ -4,8 +4,8 @@
 \alias{merge_rrewll}
 \title{Combine Water Level Records}
 \usage{
-merge_rrewll(wll, timecol = "mtime", depthcol = "depth", elevcol = "elev",
-  tempcol = "temp", sitecol = "site")
+merge_rrewll(wll, timecol = "mtime", depthcol = "depth",
+  elevcol = "elev", tempcol = "temp", sitecol = "site")
 }
 \arguments{
 \item{wll}{A list of dataframes of water level data}

@@ -4,8 +4,8 @@
 \alias{make_hsc}
 \title{Continuous Habitat Suitability Function Generator}
 \usage{
-make_hsc(value, score, scoreleft = 0, scoreright = 0, spline.expand = 1L,
-  ...)
+make_hsc(value, score, scoreleft = 0, scoreright = 0,
+  spline.expand = 1L, ...)
 }
 \arguments{
 \item{value}{Vector of parameter values, or a dataframe containing 

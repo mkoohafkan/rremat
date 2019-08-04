@@ -20,4 +20,4 @@ LazyData: true
 VignetteBuilder: knitr
 URL: https://github.com/mkoohafkan/rremat
 BugReports: https://github.com/mkoohafkan/rremat/issues
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1

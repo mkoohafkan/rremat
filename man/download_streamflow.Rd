@@ -4,8 +4,8 @@
 \alias{download_streamflow}
 \title{Download USGS streamflow data}
 \usage{
-download_streamflow(f = tempfile(), begin_date, end_date, product = "00060",
-  station = c("11467000", "11467200"), ...)
+download_streamflow(f = tempfile(), begin_date, end_date,
+  product = "00060", station = c("11467000", "11467200"), ...)
 }
 \arguments{
 \item{f}{Destination file.}

@@ -16,6 +16,26 @@
 #' @format A data frame with 3 variables
 NULL
 
+#' CTD Cast Location Data
+#'
+#' CTD Cast locations. Structured as:
+#' \itemize{
+#'   \item \code{id} CTD cast location ID
+#'   \item \code{name} CTD cast location name
+#'   \item \code{latitude} CTD cast location latitude
+#'   \item \code{longitude} CTD cast location longitude
+#' }
+#' @details CTD cast location data was collected from the Russian River Estuary 
+#'   Circulation and Water Quality Data Reports (2011, 2012, 2013, 2014) 
+#'   submitted to the Sonoma County Water Agency.
+#' @docType data
+#' @keywords datasets
+#' @name ctdlocations
+#' @usage data(ctdlocations)
+#' @format A data frame with 5 variables
+NULL
+
+
 #' Interpolated CTD Grids
 #' 
 #' Interpolated CTD grids constructed using natural neighbor interpolation in 
