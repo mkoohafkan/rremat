@@ -157,6 +157,11 @@ merge_tides = function(tides, datetimecol = "Date.Time",
 merge_waves = function(waves) {
   d = vector("list", length = length(waves))
   for (i in seq(length(waves))) {
+    for (n in c("WDIR", "PRES", "TIDE"))
+      if (!(n %in% names(waves[[i]])))
+        waves[[i]][n] = NA
+    if (!("mm" %in% names(waves[[i]])))
+      waves[[i]][['mm']] = 00
     if ("X.U.FEFF.YY" %in% names(waves[[i]]))
       waves[[i]]["YYYY"] = waves[[i]][["X.U.FEFF.YY"]]
     if ("X.U.FEFF.YYYY" %in% names(waves[[i]]))
@@ -170,11 +175,9 @@ merge_waves = function(waves) {
     waves[[i]]["MM"] = leading_zero(waves[[i]][["MM"]])
     waves[[i]]["DD"] = leading_zero(waves[[i]][["DD"]])
     waves[[i]]["hh"] = leading_zero(waves[[i]][["hh"]])
-    for (n in c("WDIR", "PRES", "TIDE"))
-      if (!(n %in% names(waves[[i]])))
-        waves[[i]][n] = NA
+    waves[[i]]["mm"] = leading_zero(waves[[i]][["mm"]])
     d[[i]] = with(waves[[i]], data.frame(
-      Datetime = as.POSIXct(paste(YYYY, MM, DD, hh, "00", sep = "-"),
+      datetime = as.POSIXct(paste(YYYY, MM, DD, hh, mm, sep = "-"),
         format = "%Y-%m-%d-%H-%M", tz = "UTC"),
       wind.speed = ifelse(WSPD > 90, NA, WSPD),
       wind.dir = ifelse(WDIR > 990, NA, WDIR),
