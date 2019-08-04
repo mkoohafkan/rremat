@@ -13,7 +13,7 @@ CTD cast data collected by the Largier Lab and processed using
 \code{rremat}. Structured as:
 \enumerate{
   \item \code{date} cast date
-  \item \code{dist} longitudinal distance from mouth (km)
+  \item \code{dist} longitudinal distance from mouth (m)
   \item \code{surfelev} water surface elevation (m NAVD29)
   \item \code{elev} elevation (m NAVD29)
   \item \code{depth} cast depth (m)

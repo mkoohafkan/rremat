@@ -15,7 +15,7 @@ Matlab. Structured as:
   \item \code{sa} salinity (PSU)
   \item \code{ta} temperature (degrees C)
   \item \code{oa} dissolved oxygen (mg/L)        
-  \item \code{dist} longitudinal distance from mouth (km)
+  \item \code{dist} longitudinal distance from mouth (m)
   \item \code{elev} elevation (m NAVD29)
   \item \code{date} cast date
 }
