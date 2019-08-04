@@ -11,7 +11,7 @@ data(ctdlocations)
 \description{
 CTD Cast locations. Structured as:
 \itemize{
-  \item \code{id} CTD cast location ID
+  \item \code{station} CTD cast location number
   \item \code{name} CTD cast location name
   \item \code{latitude} CTD cast location latitude
   \item \code{longitude} CTD cast location longitude

@@ -94,21 +94,21 @@ following sections.
 ctdipath = system.file("extdata/ctd_meta", package = "rremat")
 ctdi = readMat(file.path(ctdipath, "RR_station_IDs.mat"))
 ctdid = with(ctdi$sitekey[,, 1],
-	correct_dist(data.frame(id = unlist(stn),
+	correct_dist(data.frame(station = unlist(stn),
 	dist = unlist(dist))))
 
 ctdlpath = system.file("extdata/ctd_meta", package = "rremat")
 ctdl = read.csv(paste0(ctdlpath, "/CTDlocations.csv"),
 	stringsAsFactors = FALSE, colClasses = "character")
-ctdloc = data.frame(id = ctdl$Station.ID,
+ctdloc = data.frame(station = ctdl$Station.ID,
 	name = ctdl$Station.Name,
 	latitude = as.numeric(ctdl$Latitude),
 	longitude = as.numeric(ctdl$Longitude)
 )
 
-ctdlocations = merge(ctdloc, ctdid, by = "id")
-ctdlocations['id'] = factor(ctdlocations$id, 1:12)
-ctdlocations = ctdlocations[order(ctdlocations$id),]
+ctdlocations = merge(ctdloc, ctdid, by = "station")
+ctdlocations['station'] = factor(ctdlocations$station, 1:12)
+ctdlocations = ctdlocations[order(ctdlocations$station),]
 ```
 
 ## Processing CTD transect data
