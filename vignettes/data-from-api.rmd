@@ -23,10 +23,49 @@ Map(download_tides, tempfiles, starts, ends)
 ```{r}
 wavefiles = sprintf("http://www.ndbc.noaa.gov/view_text_file.php?filename=46013h%d.txt.gz&dir=data/historical/stdmet/",
   seq(1981, 2016))
-writefiles = sprintf("C:/Users/michael/Box Sync/UC Davis/ESTUARY FUTURES/NOAA/46013h%d.txt",
-  seq(1981, 2016))
+writefiles = file.path(tempdir(),
+  sprintf("46013h%d.txt", seq(1981, 2016)))
 
 Map(download.file, wavefiles, writefiles)
 
 # Much manual fixing and formatting needed...
+```
+
+# Hindcasted wave data
+
+```{r}
+md = paste(rep(1979:2009, each = 12),
+  gsub(" ", 0, format(1:12, digits = 2)),
+  sep = "")
+
+hindfiles = sprintf("ftp://polar.ncep.noaa.gov/pub/history/nopp-phase2/%s/points/buoys/multi_reanal.buoys_wmo.buoys.%s.tar.gz",
+  md, md)
+zipfiles = file.path(tempdir(), basename(hindfiles))
+Map(download.file, hindfiles, zipfiles)
+
+savepath = "C:/repository/rremat/inst/extdata/waves-hindcast"
+zfiles = sprintf("multi_reanal.46013.WMO.%s", md)
+Map(untar, zipfiles, zfiles, exdir = savepath)
+
+thefiles = dir(savepath, full.names = TRUE)
+thedata = lapply(thefiles, read_table2, col_names = FALSE) %>%
+  bind_rows()
+names(thedata) = c("year", "month", "day", "hour", 
+  "windspeed", "winddir", "Hs", "Tpeak")
+#where windspeed in is m/s
+#winddir in degrees true
+#Hs in m
+#Tpeak in seconds
+hindwave = thedata %>%
+  transmute(timestamp = as.POSIXct(
+    sprintf("%s-%s-%s %s:00",
+      year,
+      gsub(" ", 0, format(month, digits = 2)),
+      gsub(" ", 0, format(day, digits = 2)),
+      gsub(" ", 0, format(hour, digits = 2))
+    ), format = "%Y-%m-%d %H:%M"),
+    avg.wave = Hs,
+    avg.period = Tpeak
+  )
+
 ```
