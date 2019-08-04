@@ -83,19 +83,32 @@ attr(ctdmeta$end, "tzone") = "UTC"
 ## Processing CTD location data
 
 CTD cast location data is contained in `extdata/ctd_meta/CTDlocations.csv`.
+Cast ID data is contained in `extdata/ctd_meta/RR_station_IDs.mat`.
 This code reproduces the dataframe `ctdlocations` which provides 
-GPS coordinates of the 12 CTD cast locations for the 
-transect data described in the following sections.
+IDs thalweg distance, and GPS coordinates,  for each of the 12 
+CTD cast locations for the transect data described in the 
+following sections. 
+
 
 ```{r}
+ctdipath = system.file("extdata/ctd_meta", package = "rremat")
+ctdi = readMat(file.path(ctdipath, "RR_station_IDs.mat"))
+ctdid = with(ctdi$sitekey[,, 1],
+	correct_dist(data.frame(id = unlist(stn),
+	dist = unlist(dist))))
+
 ctdlpath = system.file("extdata/ctd_meta", package = "rremat")
-ctdl = read.csv(paste0(ctdmpath, "/CTDlocations.csv"),
+ctdl = read.csv(paste0(ctdlpath, "/CTDlocations.csv"),
 	stringsAsFactors = FALSE, colClasses = "character")
-ctdlocations = data.frame(id = factor(ctdl$Station.ID),
+ctdloc = data.frame(id = ctdl$Station.ID,
 	name = ctdl$Station.Name,
 	latitude = as.numeric(ctdl$Latitude),
 	longitude = as.numeric(ctdl$Longitude)
 )
+
+ctdlocations = merge(ctdloc, ctdid, by = "id")
+ctdlocations['id'] = factor(ctdlocations$id, 1:12)
+ctdlocations = ctdlocations[order(ctdlocations$id),]
 ```
 
 ## Processing CTD transect data

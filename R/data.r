@@ -16,6 +16,7 @@
 #' @format A data frame with 3 variables
 "ctdmeta"
 
+
 #' CTD Cast Location Data
 #'
 #' CTD Cast locations. Structured as:
@@ -24,6 +25,7 @@
 #'   \item \code{name} CTD cast location name
 #'   \item \code{latitude} CTD cast location latitude
 #'   \item \code{longitude} CTD cast location longitude
+#'   \item \code{dist} CTD cast location longitudinal distance from mouth (m)
 #' }
 #' @details CTD cast location data was collected from the Russian River Estuary 
 #'   Circulation and Water Quality Data Reports (2011, 2012, 2013, 2014) 
@@ -43,7 +45,7 @@
 #'   \item \code{sa} salinity (PSU)
 #'   \item \code{ta} temperature (degrees C)
 #'   \item \code{oa} dissolved oxygen (mg/L)        
-#'   \item \code{dist} longitudinal distance from mouth (km)
+#'   \item \code{dist} longitudinal distance from mouth (m)
 #'   \item \code{elev} elevation (m NAVD29)
 #'   \item \code{date} cast date
 #' }
@@ -61,7 +63,7 @@
 #' \code{rremat}. Structured as:
 #' \enumerate{
 #'   \item \code{date} cast date
-#'   \item \code{dist} longitudinal distance from mouth (km)
+#'   \item \code{dist} longitudinal distance from mouth (m)
 #'   \item \code{surfelev} water surface elevation (m NAVD29)
 #'   \item \code{elev} elevation (m NAVD29)
 #'   \item \code{depth} cast depth (m)

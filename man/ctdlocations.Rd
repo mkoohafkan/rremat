@@ -15,6 +15,7 @@ CTD Cast locations. Structured as:
   \item \code{name} CTD cast location name
   \item \code{latitude} CTD cast location latitude
   \item \code{longitude} CTD cast location longitude
+  \item \code{dist} CTD cast location longitudinal distance from mouth (m)
 }
 }
 \details{
