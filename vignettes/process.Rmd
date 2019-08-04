@@ -55,7 +55,7 @@ closures = read.csv(paste0(closurepath, "/closures.csv"),
 
 ## Processing CTD transect meta data
 
-CTD transect meta data is contained in `extdata/ctd/transectdatetimes.csv`.
+CTD transect meta data is contained in `extdata/ctd_meta/transectdatetimes.csv`.
 This code reproduces the dataframe `ctdmeta` which provides meta data for the 
 transect data described in the following sections.
 
@@ -78,6 +78,24 @@ ctdmeta["code"] = factor(unlist(sapply(as.Date(ctdmeta$start), function(x){
 # set time zones to UTC
 attr(ctdmeta$start, "tzone") = "UTC"
 attr(ctdmeta$end, "tzone") = "UTC"
+```
+
+## Processing CTD location data
+
+CTD cast location data is contained in `extdata/ctd_meta/CTDlocations.csv`.
+This code reproduces the dataframe `ctdlocations` which provides 
+GPS coordinates of the 12 CTD cast locations for the 
+transect data described in the following sections.
+
+```{r}
+ctdlpath = system.file("extdata/ctd_meta", package = "rremat")
+ctdl = read.csv(paste0(ctdmpath, "/CTDlocations.csv"),
+	stringsAsFactors = FALSE, colClasses = "character")
+ctdlocations = data.frame(id = factor(ctdl$Station.ID),
+	name = ctdl$Station.Name,
+	latitude = as.numeric(ctdl$Latitude),
+	longitude = as.numeric(ctdl$Longitude)
+)
 ```
 
 ## Processing CTD transect data
@@ -157,7 +175,7 @@ This code reproduces the dataframe `waves` generated from files in
 historical data web page.
 
 ```{r process-waves}
-wavespath = system.file("ext/waves", package = "rremat")
+wavespath = system.file("extdata/waves", package = "rremat")
 waves.list = Map(read.csv, file = paste0(wavespath, "/", dir(wavespath)),
   stringsAsFactors = FALSE, encoding = "UTF-8", comment.char = "#")
 waves = merge_waves(waves.list)
