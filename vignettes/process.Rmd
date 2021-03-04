@@ -42,7 +42,7 @@ stage_volume = volumes  %>%
 
 ## Processing closure data
 
-information on closures is contained in `extdata/closres/closures.csv`.
+information on closures is contained in `extdata/closures/closures.csv`.
 This code reproduces the data frame `closures` which provides meta data for
 closures occurring during the monitoring periods.
 
@@ -141,9 +141,12 @@ gridpath = system.file("extdata/ctd_interp", package = "rremat")
 grid.list = Map(function(fpath) read_rrectdgrid(fpath, quiet = TRUE)[[1]],
   fpath = paste0(gridpath, "/", dir(gridpath)))
 grids = merge_rrectd(grid.list)
-grids = join_wse(grids, ctd) %>% mutate(wse = round(wse, 1)) %>% 
-  filter(elev <= wse) %>% join_volume(volumes) %>% 
+grids = join_wse(grids, ctd) %>%
+  mutate(wse = round(wse, 1)) %>% 
+  filter(elev <= wse) %>%
+  join_volume(volumes) %>% 
   filter(volume.total > 0)
+#usethis::use_data(grids, overwrite = TRUE)
 ```
 
 ## Processing water level pressure gauge data
