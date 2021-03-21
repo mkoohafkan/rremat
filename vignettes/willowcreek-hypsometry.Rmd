@@ -1,0 +1,127 @@
+# Willow Creek
+
+```{r}
+library(raster)
+library(tidyverse)
+```
+
+```{r}
+classify_depth = function(z, bedelev, surfelev, suitable, valid) {
+  if (missing(suitable)) {
+    suitable = rep(TRUE, length(z))
+  }
+  if (missing(valid)) {
+    valid = rep(TRUE, length(z))
+  }
+  depth = surfelev - z
+  max.depth = surfelev - bedelev
+  factor(case_when(
+    !(valid) ~ NA_character_,
+    !suitable ~ "Unsuitable",
+    (depth < 1) & (max.depth < 1) ~ "Littoral",
+    (depth < 1) & (max.depth >= 1) ~ "Surface Limnetic",
+    between(depth, 1, 5) & (max.depth <= 5) ~ "Epibenthic",
+    between(depth, 1, 5) & (max.depth > 5) ~ "Subsurface Limnetic",
+    depth > 5 ~ "Profundal",
+    TRUE ~ NA_character_
+  ), c("Littoral", "Surface Limnetic", "Epibenthic", 
+    "Subsurface Limnetic", "Profundal", "Unsuitable"),
+    ordered = TRUE)
+}
+```
+
+
+```{r}
+wc.path = "DEMs/wc_21_0pt5_nn1.tif"
+wc = raster(wc.path)
+
+wc.points = wc %>%
+  rasterToPoints() %>%
+  as_tibble() %>%
+  rename(bed.elevation = 3) 
+
+elev.breaks = seq(
+  round(min(wc.points$bed.elevation), 1) - 0.05,
+  round(max(wc.points$bed.elevation), 1) + 0.05,
+  by = 0.1
+)
+elev.label = head(elev.breaks + 0.05, -1)
+
+wc.count = wc.points %>%
+  mutate(elevation.class = cut(bed.elevation,
+    breaks = elev.breaks, labels = elev.label)) %>%
+  group_by(elevation.class) %>%
+  summarize(count = n(), .groups =  "drop")
+```
+
+```{r}
+habitat = expand_grid(
+  surface.elevation = seq(1, 2.7, by = 0.1),
+  elevation = seq(round(min(wc.points$bed.elevation), 1), 2.7,
+    by = 0.1),
+  data = list(wc.count)
+) %>%
+  filter(elevation <= surface.elevation) %>%
+  unnest(data) %>%
+  mutate(bed.elevation = as.numeric(as.character(elevation.class))) %>%
+  filter(bed.elevation <= elevation) %>%
+  mutate(habitat.class = classify_depth(elevation, bed.elevation,
+    surface.elevation)) %>%
+  group_by(surface.elevation, habitat.class) %>%
+  summarize(count = sum(count), .groups = "drop") %>%
+  mutate(volume = count * prod(res(wc)), .keep = "unused")
+
+wc.volumes = habitat %>% 
+  mutate(habitat.class = factor(habitat.class,
+    c("Littoral", "Surface Limnetic", "Epibenthic", "Subsurface Limnetic", 
+      "Profundal", "Unsuitable"),
+    c("volume.littoral", "volume.limnetic", "volume.sublimnetic",
+      "volume.epibenthic", "volume.profundal", "Unsuitable"))
+  ) %>%
+  spread(habitat.class, volume, fill = 0) %>%
+  mutate(volume.total = surface.elevation + volume.littoral +
+    volume.limnetic + volume.sublimnetic + volume.epibenthic +
+    volume.profundal)
+
+# save(wc.volumes, file = "wc.volumes.rda")
+```
+
+```{r}
+habitat %>% 
+  arrange(surface.elevation) %>%
+  group_by(habitat.class) %>%
+  mutate(volume = cumsum(volume)) %>%
+  ungroup() %>%
+  ggplot() + 
+    aes(x = surface.elevation, y = volume, fill = habitat.class) +
+    geom_area()
+
+hypsometry = tibble(
+  elevation = seq(min(wc.points$bed.elevation), 2.7, by = 0.1),
+  elevation.class = cut(elevation, breaks = elevation),
+  data = list(wc.points)
+) %>%
+  unnest(data) %>%
+  filter(bed.elevation < elevation) %>%
+  group_by(elevation.class) %>%
+  summarize(elevation = unique(elevation),
+    volume = n() * prod(res(wc)), 
+    .groups = "drop") 
+```  
+
+```{r}# hypsometry
+ggplot(hypsometry) +
+  aes(x = elevation, y = volume) +
+  geom_line(size = 1) 
+
+# raster
+ggplot(wc.points) +  
+  aes(x = x, y = y, fill = bed.elevation) +
+  geom_raster() + 
+  coord_equal() +
+  scale_fill_viridis_c()
+
+
+#shp = "Shapefiles/WC_011121_AllPts.shp"
+#read_sf(shp) %>% plot
+```
