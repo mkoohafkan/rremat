@@ -5,6 +5,8 @@ library(raster)
 library(tidyverse)
 ```
 
+# DEM processing
+
 ```{r}
 classify_depth = function(z, bedelev, surfelev, suitable, valid) {
   if (missing(suitable)) {
@@ -32,7 +34,8 @@ classify_depth = function(z, bedelev, surfelev, suitable, valid) {
 
 
 ```{r}
-wc.path = "DEMs/wc_21_0pt5_nn1.tif"
+wc.path = system.file("extdata/willowcreek/DEMs/wc_21_0pt5_nn1.tif",
+  package = "rremat")
 wc = raster(wc.path)
 
 wc.points = wc %>%
@@ -52,11 +55,9 @@ wc.count = wc.points %>%
     breaks = elev.breaks, labels = elev.label)) %>%
   group_by(elevation.class) %>%
   summarize(count = n(), .groups =  "drop")
-```
 
-```{r}
-habitat = expand_grid(
-  surface.elevation = seq(1, 2.7, by = 0.1),
+depth.habitat = expand_grid(
+  surface.elevation = seq(0.7, 2.7, by = 0.1),
   elevation = seq(round(min(wc.points$bed.elevation), 1), 2.7,
     by = 0.1),
   data = list(wc.count)
@@ -71,7 +72,7 @@ habitat = expand_grid(
   summarize(count = sum(count), .groups = "drop") %>%
   mutate(volume = count * prod(res(wc)), .keep = "unused")
 
-wc.volumes = habitat %>% 
+wc.volumes = depth.habitat %>% 
   mutate(habitat.class = factor(habitat.class,
     c("Littoral", "Surface Limnetic", "Epibenthic", "Subsurface Limnetic", 
       "Profundal", "Unsuitable"),
@@ -81,13 +82,14 @@ wc.volumes = habitat %>%
   spread(habitat.class, volume, fill = 0) %>%
   mutate(volume.total = surface.elevation + volume.littoral +
     volume.limnetic + volume.sublimnetic + volume.epibenthic +
-    volume.profundal)
+    volume.profundal) %>%
+  rename(wse = surface.elevation)
 
-# save(wc.volumes, file = "wc.volumes.rda")
+usethis::use_data(wc.volumes)
 ```
 
 ```{r}
-habitat %>% 
+depth.habitat %>% 
   arrange(surface.elevation) %>%
   group_by(habitat.class) %>%
   mutate(volume = cumsum(volume)) %>%
@@ -120,8 +122,4 @@ ggplot(wc.points) +
   geom_raster() + 
   coord_equal() +
   scale_fill_viridis_c()
-
-
-#shp = "Shapefiles/WC_011121_AllPts.shp"
-#read_sf(shp) %>% plot
 ```

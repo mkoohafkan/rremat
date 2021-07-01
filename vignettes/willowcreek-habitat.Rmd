@@ -1,0 +1,18 @@
+```{r}
+library(tidyverse)
+library(readxl)
+devtools::load_all()
+```
+
+data(wc.volumes)
+
+wc.data.path = system.file("extdata/willowcreek/WillowCreek_2013_2019.xlsx",
+  package = "rremat")
+
+wc.data = read_excel(wc.data.path, range = "D6:J22714", na = "NaN") %>%
+  select(date, wse = 4, ta = 3, oa = 5, sa = 7) %>%
+  mutate(wse = round(wse, 0.1)) %>%
+  na.omit() %>%
+  left_join(wc.volumes, by = "wse")
+
+usethis::use_data(wc.data)
