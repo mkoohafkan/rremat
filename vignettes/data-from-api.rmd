@@ -8,12 +8,16 @@ output: html_document
 ```{r}
 library(rremat)
 
-years = seq(1975, 2017)
+years = seq(1975, 2019)
 starts = sprintf("%d0101", years)
 ends = sprintf("%d1231", years)
 
 tempfiles = file.path(tempdir(),
   sprintf("CO-OPS__9415020__hr_%d.csv", years))
+
+for(i in seq_along(tempfiles)) {
+  download_tides(tempfiles[i], starts[i], ends[i])
+}
 
 Map(download_tides, tempfiles, starts, ends)
 ```
